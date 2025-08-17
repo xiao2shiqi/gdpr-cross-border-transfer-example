@@ -1,0 +1,85 @@
+server:
+  port: 8080
+
+spring:
+  application:
+    name: hotel-reservation-eu
+  
+  datasource:
+    url: jdbc:mysql://localhost:3306/hotel-reservation-eu?useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true
+    username: root
+    password: 123456
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    
+    # 中国BI数据库配置
+    china-bi:
+      url: jdbc:mysql://localhost:3306/china-bi-system?useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true
+      username: root
+      password: 123456
+      driver-class-name: com.mysql.cj.jdbc.Driver
+  
+  mybatis-plus:
+    configuration:
+      map-underscore-to-camel-case: true
+      log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
+    global-config:
+      db-config:
+        id-type: auto
+        logic-delete-field: deleted
+        logic-delete-value: 1
+        logic-not-delete-value: 0
+  
+  thymeleaf:
+    cache: false
+    prefix: classpath:/templates/
+    suffix: .html
+    encoding: UTF-8
+    mode: HTML
+  
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+
+logging:
+  level:
+    com.hotelbooking.hotel_reservation_eu: INFO
+    org.springframework.security: DEBUG
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss} - %msg%n"
+    file: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n"
+  file:
+    name: logs/hotel-reservation-eu.log
+
+# 安全配置
+security:
+  jwt:
+    secret: your-secret-key-here-make-it-long-and-secure
+    expiration: 86400000 # 24小时
+
+# 管理端点配置
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics
+  endpoint:
+    health:
+      show-details: when_authorized
+
+# AWS KMS 数据加密配置
+aws:
+  kms:
+    #    data-encryption-key: "your-secret-encryption-key-here-must-be-at-least-32-characters-long"
+    data-encryption-key: ${DATA_ENCRYPTION_KEY:default-key-for-development}
+
+# 或者使用环境变量
+# data-encryption-key: ${DATA_ENCRYPTION_KEY:default-key-for-development}
+
+# 数据同步配置
+data-sync:
+  schedule:
+    interval: 15000 # 15秒
+  anonymization:
+    enabled: true
+    remove-pii: true

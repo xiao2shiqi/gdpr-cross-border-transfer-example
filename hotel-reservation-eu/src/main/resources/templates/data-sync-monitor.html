@@ -1,0 +1,484 @@
+<!DOCTYPE html>
+<html lang="zh-CN" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>数据同步监控 - EU酒店预订系统</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: #333;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+            color: white;
+        }
+        
+        .header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+        
+        .header p {
+            font-size: 1.2rem;
+            opacity: 0.9;
+        }
+        
+        .back-link {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            background: rgba(255,255,255,0.2);
+            color: white;
+            padding: 10px 20px;
+            border-radius: 25px;
+            text-decoration: none;
+            backdrop-filter: blur(10px);
+            transition: all 0.3s ease;
+        }
+        
+        .back-link:hover {
+            background: rgba(255,255,255,0.3);
+            transform: translateY(-2px);
+        }
+        
+        .status-card {
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            margin-bottom: 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+        }
+        
+        .status-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid #ecf0f1;
+        }
+        
+        .status-title {
+            font-size: 1.5rem;
+            color: #2c3e50;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .status-badge {
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 0.9rem;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+        
+        .status-running {
+            background: #3498db;
+            color: white;
+        }
+        
+        .status-completed {
+            background: #27ae60;
+            color: white;
+        }
+        
+        .status-failed {
+            background: #e74c3c;
+            color: white;
+        }
+        
+        .status-idle {
+            background: #95a5a6;
+            color: white;
+        }
+        
+        .status-info {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+        }
+        
+        .info-item {
+            text-align: center;
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 10px;
+            border-left: 4px solid #667eea;
+        }
+        
+        .info-label {
+            color: #7f8c8d;
+            font-size: 0.8rem;
+            margin-bottom: 5px;
+        }
+        
+        .info-value {
+            font-size: 1.2rem;
+            font-weight: bold;
+            color: #2c3e50;
+        }
+        
+        .bi-database-status {
+            background: #f8f9fa;
+            border-radius: 10px;
+            border-left: 4px solid #e74c3c;
+            padding: 15px;
+            text-align: center;
+        }
+        
+        .bi-database-status.connected {
+            border-left-color: #27ae60;
+        }
+        
+        .bi-database-status.disconnected {
+            border-left-color: #e74c3c;
+        }
+        
+        .actions {
+            text-align: center;
+            margin: 30px 0;
+        }
+        
+        .action-button {
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 25px;
+            cursor: pointer;
+            font-size: 1rem;
+            font-weight: 600;
+            margin: 0 10px;
+            transition: all 0.3s ease;
+        }
+        
+        .action-button:hover {
+            background: #5a6fd8;
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+        }
+        
+        .action-button:disabled {
+            background: #bdc3c7;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+        
+        .action-button.success {
+            background: #27ae60;
+        }
+        
+        .action-button.danger {
+            background: #e74c3c;
+        }
+        
+        .service-info {
+            background: rgba(255,255,255,0.1);
+            border-radius: 15px;
+            padding: 20px;
+            margin-top: 30px;
+            color: white;
+            backdrop-filter: blur(10px);
+        }
+        
+        .service-info h4 {
+            margin-bottom: 15px;
+            font-size: 1.2rem;
+        }
+        
+        .service-info p {
+            margin-bottom: 8px;
+            opacity: 0.9;
+        }
+        
+        @media (max-width: 768px) {
+            .container {
+                padding: 15px;
+            }
+            
+            .header h1 {
+                font-size: 2rem;
+            }
+            
+            .status-info {
+                grid-template-columns: 1fr;
+            }
+            
+            .back-link {
+                position: relative;
+                top: auto;
+                left: auto;
+                margin-bottom: 20px;
+                display: inline-block;
+            }
+            
+            .action-button {
+                display: block;
+                margin: 10px auto;
+                width: 100%;
+                max-width: 300px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- 返回链接 -->
+        <a href="/" class="back-link">← 返回首页</a>
+        
+        <!-- 页面标题 -->
+        <div class="header">
+            <h1>📊 数据同步监控</h1>
+            <p>EU酒店预订系统 - 数据同步服务状态监控</p>
+        </div>
+
+        <!-- 同步状态卡片 -->
+        <div class="status-card">
+            <div class="status-header">
+                <h2 class="status-title">🔄 同步状态</h2>
+                <span class="status-badge" th:classappend="${'status-' + #strings.toLowerCase(syncStatus)}" 
+                      th:text="${syncStatus}">IDLE</span>
+            </div>
+            
+            <div class="status-info">
+                <div class="info-item">
+                    <div class="info-label">最后同步时间</div>
+                    <div class="info-value" th:text="${lastSyncTime != null ? #temporals.format(lastSyncTime, 'yyyy-MM-dd HH:mm:ss') : '暂无'}">暂无</div>
+                </div>
+                
+                <div class="info-item">
+                    <div class="info-label">当前状态</div>
+                    <div class="info-value" th:text="${syncStatus}">IDLE</div>
+                </div>
+                
+                <div class="info-item">
+                    <div class="info-label">同步间隔</div>
+                    <div class="info-value">15秒</div>
+                </div>
+                
+                <div class="info-item">
+                    <div class="info-label">服务状态</div>
+                    <div class="info-value">运行中</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- BI数据库状态卡片 -->
+        <div class="status-card">
+            <div class="status-header">
+                <h2 class="status-title">🗄️ BI数据库状态</h2>
+                <span class="status-badge" id="biDbStatusBadge">检查中...</span>
+            </div>
+            
+            <div class="status-info">
+                <div class="info-item bi-database-status" id="biDbStatusItem">
+                    <div class="info-label">数据库连接</div>
+                    <div class="info-value" id="biDbConnectionStatus">检查中...</div>
+                </div>
+                
+                <div class="info-item">
+                    <div class="info-label">数据库名称</div>
+                    <div class="info-value">china_bi_system</div>
+                </div>
+                
+                <div class="info-item">
+                    <div class="info-label">数据同步</div>
+                    <div class="info-value" id="biDbSyncStatus">检查中...</div>
+                </div>
+                
+                <div class="info-item">
+                    <div class="info-label">最后检查</div>
+                    <div class="info-value" id="biDbLastCheck">检查中...</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 操作按钮 -->
+        <div class="actions">
+            <button class="action-button" onclick="refreshStatus()">🔄 刷新状态</button>
+            <button class="action-button" onclick="manualSync()">🚀 手动同步</button>
+            <button class="action-button" onclick="checkBiConnection()">🔗 检查BI连接</button>
+            <button class="action-button" onclick="testBiWrite()">🧪 测试BI写入</button>
+            <button class="action-button" onclick="getServiceInfo()">ℹ️ 服务信息</button>
+        </div>
+
+        <!-- 服务信息 -->
+        <div class="service-info">
+            <h4>📡 服务说明</h4>
+            <p>• 服务名称：EU酒店数据同步服务</p>
+            <p>• 主要功能：生成匿名化统计报告，同步到中国BI数据库</p>
+            <p>• 同步频率：每15秒自动执行一次</p>
+            <p>• 数据脱敏：完全去除PII信息，符合GDPR等数据保护法规</p>
+            <p>• 报告类型：每日收入、热门房型、分店业绩、预订趋势等统计</p>
+            <p>• BI同步：统计数据实时写入china_bi_system数据库，支持多地区数据展示</p>
+        </div>
+    </div>
+
+    <script>
+        // 刷新状态
+        function refreshStatus() {
+            location.reload();
+        }
+        
+        // 手动同步
+        function manualSync() {
+            const button = event.target;
+            button.disabled = true;
+            button.textContent = '同步中...';
+            
+            fetch('/api/data-sync/manual-sync', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    alert('手动同步已触发！');
+                    setTimeout(() => location.reload(), 1000);
+                } else {
+                    alert('手动同步失败：' + data.message);
+                }
+            })
+            .catch(error => {
+                alert('请求失败：' + error.message);
+            })
+            .finally(() => {
+                button.disabled = false;
+                button.textContent = '🚀 手动同步';
+            });
+        }
+        
+        // 检查BI数据库连接
+        function checkBiConnection() {
+            const button = event.target;
+            button.disabled = true;
+            button.textContent = '检查中...';
+            
+            fetch('/api/data-sync/bi-database/connection')
+            .then(response => response.json())
+            .then(data => {
+                updateBiDatabaseStatus(data.connected, data.message);
+                alert('BI数据库连接状态：' + data.message);
+            })
+            .catch(error => {
+                alert('检查失败：' + error.message);
+            })
+            .finally(() => {
+                button.disabled = false;
+                button.textContent = '🔗 检查BI连接';
+            });
+        }
+        
+        // 测试BI数据库写入
+        function testBiWrite() {
+            const button = event.target;
+            button.disabled = true;
+            button.textContent = '测试中...';
+            
+            fetch('/api/data-sync/bi-database/test-write', {
+                method: 'POST'
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    alert('BI数据库写入测试成功！');
+                } else {
+                    alert('BI数据库写入测试失败：' + data.message);
+                }
+            })
+            .catch(error => {
+                alert('测试失败：' + error.message);
+            })
+            .finally(() => {
+                button.disabled = false;
+                button.textContent = '🧪 测试BI写入';
+            });
+        }
+        
+        // 获取服务信息
+        function getServiceInfo() {
+            fetch('/api/data-sync/info')
+            .then(response => response.json())
+            .then(data => {
+                const info = `服务名称：${data.serviceName}\n描述：${data.description}\n同步状态：${data.syncStatus}\n最后同步：${data.lastSyncTime || '暂无'}\n同步间隔：${data.scheduleInterval}\nBI数据库连接：${data.biDatabaseConnection ? '正常' : '失败'}`;
+                alert(info);
+            })
+            .catch(error => {
+                alert('获取服务信息失败：' + error.message);
+            });
+        }
+        
+        // 更新BI数据库状态显示
+        function updateBiDatabaseStatus(connected, message) {
+            const statusBadge = document.getElementById('biDbStatusBadge');
+            const statusItem = document.getElementById('biDbStatusItem');
+            const connectionStatus = document.getElementById('biDbConnectionStatus');
+            const syncStatus = document.getElementById('biDbSyncStatus');
+            const lastCheck = document.getElementById('biDbLastCheck');
+            
+            if (connected) {
+                statusBadge.textContent = '连接正常';
+                statusBadge.className = 'status-badge status-completed';
+                statusItem.className = 'info-item bi-database-status connected';
+                connectionStatus.textContent = '✅ 正常';
+                syncStatus.textContent = '✅ 可用';
+            } else {
+                statusBadge.textContent = '连接失败';
+                statusBadge.className = 'status-badge status-failed';
+                statusItem.className = 'info-item bi-database-status disconnected';
+                connectionStatus.textContent = '❌ 失败';
+                syncStatus.textContent = '❌ 不可用';
+            }
+            
+            lastCheck.textContent = new Date().toLocaleTimeString();
+        }
+        
+        // 页面加载完成后自动刷新状态
+        document.addEventListener('DOMContentLoaded', function() {
+            // 立即检查BI数据库状态
+            checkBiConnection();
+            
+            // 每30秒自动刷新一次状态
+            setInterval(() => {
+                fetch('/api/data-sync/status')
+                .then(response => response.json())
+                .then(data => {
+                    // 更新状态显示
+                    const statusElement = document.querySelector('.status-badge');
+                    if (statusElement) {
+                        statusElement.textContent = data.syncStatus;
+                        statusElement.className = 'status-badge status-' + data.syncStatus.toLowerCase();
+                    }
+                    
+                    // 更新BI数据库状态
+                    updateBiDatabaseStatus(data.biDatabaseConnection, data.biDatabaseConnection ? '连接正常' : '连接失败');
+                })
+                .catch(error => console.log('自动刷新状态失败:', error));
+            }, 30000);
+        });
+    </script>
+</body>
+</html>

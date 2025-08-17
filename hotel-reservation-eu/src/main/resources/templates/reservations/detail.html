@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="zh-CN" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>预订详情</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body>
+    <div class="container mt-4">
+        <h2>预订详情</h2>
+        <div class="card">
+            <div class="card-body">
+                <h5 class="card-title" th:text="${reservation.roomTypeName}">房型名称</h5>
+                <p class="card-text" th:text="${reservation.branchName}">分店名称</p>
+                <p class="card-text">
+                    入住日期: <span th:text="${reservation.checkinDate}"></span> 至 
+                    退房日期: <span th:text="${reservation.checkoutDate}"></span>
+                </p>
+                <p class="card-text">总价格: €<span th:text="${reservation.totalPrice}"></span></p>
+                <p class="card-text">状态: <span th:text="${reservation.statusDisplayName}"></span></p>
+                <a href="/reservations/my" class="btn btn-primary">返回我的预订</a>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

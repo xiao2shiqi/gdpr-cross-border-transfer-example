@@ -1,0 +1,445 @@
+<!DOCTYPE html>
+<html lang="zh-CN" xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="_csrf" th:content="${_csrf.token}"/>
+    <meta name="_csrf_header" th:content="${_csrf.headerName}"/>
+    <title>个人资料 - 欧洲酒店预订系统</title>
+    
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    
+    <style>
+        :root {
+            --primary-color: #2c3e50;
+            --secondary-color: #3498db;
+            --success-color: #27ae60;
+            --light-bg: #f8f9fa;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--light-bg);
+        }
+
+        .navbar-brand {
+            font-weight: bold;
+            color: var(--primary-color) !important;
+        }
+
+        .btn-primary {
+            background-color: var(--secondary-color);
+            border-color: var(--secondary-color);
+        }
+
+        .btn-primary:hover {
+            background-color: #2980b9;
+            border-color: #2980b9;
+        }
+
+        .card {
+            border: none;
+            border-radius: 15px;
+            box-shadow: 0 0 20px rgba(0,0,0,0.1);
+        }
+
+        .profile-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 2rem;
+            border-radius: 15px 15px 0 0;
+        }
+
+        .form-label {
+            font-weight: 500;
+        }
+
+        .form-control:focus {
+            border-color: var(--secondary-color);
+            box-shadow: 0 0 0 0.25rem rgba(52, 152, 219, 0.25);
+        }
+
+        .profile-avatar {
+            width: 100px;
+            height: 100px;
+            background-color: #fff;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 1.5rem;
+            box-shadow: 0 0 15px rgba(0,0,0,0.1);
+        }
+
+        .profile-avatar i {
+            font-size: 3rem;
+            color: var(--secondary-color);
+        }
+
+        .gdpr-consent {
+            background-color: rgba(52, 152, 219, 0.1);
+            border-radius: 10px;
+            padding: 1.5rem;
+        }
+
+        .gdpr-rights {
+            background-color: rgba(46, 204, 113, 0.05);
+            border-radius: 10px;
+            padding: 1.5rem;
+        }
+
+        .gdpr-rights .card {
+            transition: transform 0.2s ease-in-out;
+        }
+
+        .gdpr-rights .card:hover {
+            transform: translateY(-2px);
+        }
+
+        .gdpr-rights .card-title {
+            color: var(--primary-color);
+            font-weight: 600;
+        }
+
+        .gdpr-rights .btn {
+            transition: all 0.2s ease-in-out;
+        }
+
+        .gdpr-rights .btn:hover {
+            transform: scale(1.05);
+        }
+    </style>
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar navbar-expand-lg navbar-light bg-white shadow-sm">
+        <div class="container">
+            <a class="navbar-brand" href="/dashboard">
+                <i class="fas fa-hotel me-2"></i>欧洲酒店预订系统
+            </a>
+            
+            <div class="navbar-nav ms-auto">
+                <div class="nav-item dropdown">
+                    <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
+                        <i class="fas fa-user me-1"></i>
+                        <span sec:authentication="name" th:text="${username}">用户</span>
+                    </a>
+                    <ul class="dropdown-menu">
+                        <li><a class="dropdown-item" href="/dashboard">
+                            <i class="fas fa-home me-2"></i>返回仪表板
+                        </a></li>
+                        <li><a class="dropdown-item" href="/auth/logout">
+                            <i class="fas fa-sign-out-alt me-2"></i>退出登录
+                        </a></li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <div class="container mt-5">
+        <!-- Profile Card -->
+        <div class="row justify-content-center mb-5">
+            <div class="col-lg-10">
+                <div class="card">
+                    <!-- Profile Header -->
+                    <div class="profile-header d-flex align-items-center">
+                        <div class="profile-avatar">
+                            <i class="fas fa-user"></i>
+                        </div>
+                        <div>
+                            <h2 class="mb-1" th:text="${userProfile.firstName + ' ' + userProfile.lastName}">用户姓名</h2>
+                            <p class="mb-0">
+                                <i class="fas fa-user-tag me-1"></i>
+                                <span th:text="${userProfile.username}">用户名</span>
+                            </p>
+                        </div>
+                    </div>
+                    
+                    <!-- Success Message -->
+                    <div class="alert alert-success m-3" role="alert" th:if="${successMessage}">
+                        <i class="fas fa-check-circle me-2"></i>
+                        <span th:text="${successMessage}">操作成功</span>
+                    </div>
+                    
+                    <!-- Profile Form -->
+                    <div class="card-body p-4">
+                        <form th:action="@{/profile}" th:object="${userProfile}" method="post">
+                            <input type="hidden" th:field="*{id}" />
+                            <input type="hidden" th:field="*{username}" />
+                            
+                            <h4 class="mb-4">
+                                <i class="fas fa-user-edit me-2 text-primary"></i>个人信息
+                            </h4>
+                            
+                            <!-- Basic Info -->
+                            <div class="row mb-4">
+                                <div class="col-md-6 mb-3">
+                                    <label for="firstName" class="form-label">名</label>
+                                    <input type="text" class="form-control" id="firstName" th:field="*{firstName}" required>
+                                    <div class="text-danger" th:if="${#fields.hasErrors('firstName')}" th:errors="*{firstName}"></div>
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label for="lastName" class="form-label">姓</label>
+                                    <input type="text" class="form-control" id="lastName" th:field="*{lastName}" required>
+                                    <div class="text-danger" th:if="${#fields.hasErrors('lastName')}" th:errors="*{lastName}"></div>
+                                </div>
+                            </div>
+                            
+                            <div class="row mb-4">
+                                <div class="col-md-6 mb-3">
+                                    <label for="email" class="form-label">电子邮箱</label>
+                                    <input type="email" class="form-control" id="email" th:field="*{email}" required>
+                                    <div class="text-danger" th:if="${#fields.hasErrors('email')}" th:errors="*{email}"></div>
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label for="phoneNumber" class="form-label">电话号码</label>
+                                    <input type="tel" class="form-control" id="phoneNumber" th:field="*{phoneNumber}">
+                                    <div class="text-danger" th:if="${#fields.hasErrors('phoneNumber')}" th:errors="*{phoneNumber}"></div>
+                                </div>
+                            </div>
+                            
+                            <div class="row mb-4">
+                                <div class="col-md-6 mb-3">
+                                    <label for="dateOfBirth" class="form-label">出生日期</label>
+                                    <input type="date" class="form-control" id="dateOfBirth" th:field="*{dateOfBirth}">
+                                    <div class="text-danger" th:if="${#fields.hasErrors('dateOfBirth')}" th:errors="*{dateOfBirth}"></div>
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label for="nationality" class="form-label">国籍</label>
+                                    <input type="text" class="form-control" id="nationality" th:field="*{nationality}">
+                                    <div class="text-danger" th:if="${#fields.hasErrors('nationality')}" th:errors="*{nationality}"></div>
+                                </div>
+                            </div>
+                            
+                            <div class="mb-4">
+                                <label for="address" class="form-label">地址</label>
+                                <textarea class="form-control" id="address" rows="3" th:field="*{address}"></textarea>
+                                <div class="text-danger" th:if="${#fields.hasErrors('address')}" th:errors="*{address}"></div>
+                            </div>
+                            
+                            <!-- GDPR Consent Section -->
+                            <div class="gdpr-consent mb-4">
+                                <h5 class="mb-3">
+                                    <i class="fas fa-shield-alt me-2 text-primary"></i>数据隐私设置
+                                </h5>
+                                
+                                <div class="form-check mb-3">
+                                    <input class="form-check-input" type="checkbox" id="gdprMarketingConsent" th:field="*{gdprMarketingConsent}">
+                                    <label class="form-check-label" for="gdprMarketingConsent">
+                                        我同意接收营销邮件和促销信息
+                                    </label>
+                                </div>
+                                
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" id="gdprAnalyticsConsent" th:field="*{gdprAnalyticsConsent}">
+                                    <label class="form-check-label" for="gdprAnalyticsConsent">
+                                        我同意我的数据被用于分析和服务改进
+                                    </label>
+                                </div>
+                                
+                                <small class="text-muted d-block mt-2">
+                                    <i class="fas fa-info-circle me-1"></i>
+                                    您可以随时更改这些设置。查看我们的<a href="/privacy-policy" target="_blank">隐私政策</a>了解更多信息。
+                                </small>
+                            </div>
+                            
+                            <!-- GDPR Rights Section -->
+                            <div class="gdpr-rights mb-4">
+                                <h5 class="mb-3">
+                                    <i class="fas fa-gavel me-2 text-primary"></i>GDPR数据权利
+                                </h5>
+                                
+                                <div class="row">
+                                    <div class="col-md-6 mb-3">
+                                        <div class="card border-info h-100">
+                                            <div class="card-body text-center">
+                                                <i class="fas fa-download text-info mb-2" style="font-size: 2rem;"></i>
+                                                <h6 class="card-title">数据可携权</h6>
+                                                <p class="card-text small text-muted">
+                                                    根据GDPR第20条，您有权以结构化、常用和机器可读的格式接收您的个人数据
+                                                </p>
+                                                <a href="/profile/export" class="btn btn-outline-info btn-sm">
+                                                    <i class="fas fa-download me-1"></i>导出我的数据
+                                                </a>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="col-md-6 mb-3">
+                                        <div class="card border-warning h-100">
+                                            <div class="card-body text-center">
+                                                <i class="fas fa-user-times text-warning mb-2" style="font-size: 2rem;"></i>
+                                                <h6 class="card-title">被遗忘权</h6>
+                                                <p class="card-text small text-muted">
+                                                    根据GDPR第17条，您有权要求删除您的个人数据
+                                                </p>
+                                                <button class="btn btn-outline-warning btn-sm" onclick="confirmAccountDeletion()">
+                                                    <i class="fas fa-user-times me-1"></i>删除账户
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="alert alert-info mt-3">
+                                    <h6 class="alert-heading">
+                                        <i class="fas fa-info-circle me-2"></i>关于数据导出
+                                    </h6>
+                                    <p class="mb-2 small">
+                                        导出的数据将包含您的所有个人信息，包括：
+                                    </p>
+                                    <ul class="small mb-0">
+                                        <li>基本信息（姓名、邮箱、地址等）</li>
+                                        <li>GDPR同意设置</li>
+                                        <li>账户安全信息</li>
+                                        <li>数据导出元数据</li>
+                                    </ul>
+                                </div>
+                            </div>
+                            
+                            <!-- Submit Button -->
+                            <div class="d-flex justify-content-between">
+                                <a href="/dashboard" class="btn btn-outline-secondary">
+                                    <i class="fas fa-arrow-left me-2"></i>返回仪表板
+                                </a>
+                                <button type="submit" class="btn btn-primary">
+                                    <i class="fas fa-save me-2"></i>保存更改
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="bg-white mt-5 py-4 border-top">
+        <div class="container">
+            <div class="row">
+                <div class="col-md-6">
+                    <p class="text-muted mb-0">
+                        &copy; 2024 欧洲酒店预订系统. 保留所有权利.
+                    </p>
+                </div>
+                <div class="col-md-6 text-end">
+                    <p class="text-muted mb-0">
+                        遵循GDPR数据保护法规
+                    </p>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <!-- 账户删除功能JavaScript -->
+    <script>
+        // 获取CSRF令牌
+        function getCsrfToken() {
+            const token = document.querySelector('meta[name="_csrf"]')?.getAttribute('content');
+            if (!token) {
+                console.warn('CSRF token not found, using fallback method');
+                // 如果meta标签中没有，尝试从cookie中获取
+                return getCookie('XSRF-TOKEN');
+            }
+            return token;
+        }
+        
+        // 从cookie中获取CSRF令牌的辅助函数
+        function getCookie(name) {
+            const value = `; ${document.cookie}`;
+            const parts = value.split(`; ${name}=`);
+            if (parts.length === 2) return parts.pop().split(';').shift();
+            return null;
+        }
+        
+        function confirmAccountDeletion() {
+            // 显示确认对话框
+            if (confirm('⚠️ 警告：此操作不可撤销！\n\n' +
+                       '删除账户将：\n' +
+                       '• 永久删除您的所有个人数据\n' +
+                       '• 禁用您的账户登录\n' +
+                       '• 清除所有GDPR同意设置\n\n' +
+                       '根据GDPR第17条（被遗忘权），您的数据将被匿名化处理。\n\n' +
+                       '确定要删除您的账户吗？')) {
+                
+                // 显示加载状态
+                const button = event.target;
+                const originalText = button.innerHTML;
+                button.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i>处理中...';
+                button.disabled = true;
+                
+                // 获取CSRF令牌
+                const csrfToken = getCsrfToken();
+                
+                // 准备请求头
+                const headers = {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                };
+                
+                // 如果有CSRF令牌，添加到请求头
+                if (csrfToken) {
+                    headers['X-CSRF-TOKEN'] = csrfToken;
+                }
+                
+                // 发送删除请求
+                fetch('/profile/delete', {
+                    method: 'POST',
+                    headers: headers,
+                    body: 'confirmDeletion=true'
+                })
+                .then(response => {
+                    if (!response.ok) {
+                        if (response.status === 403) {
+                            throw new Error('访问被拒绝，可能是CSRF令牌问题');
+                        }
+                        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    if (data.success) {
+                        // 删除成功，显示成功消息并重定向
+                        alert('✅ ' + data.message);
+                        window.location.href = data.redirectUrl;
+                    } else {
+                        // 删除失败，显示错误消息
+                        alert('❌ ' + data.message);
+                        // 恢复按钮状态
+                        button.innerHTML = originalText;
+                        button.disabled = false;
+                    }
+                })
+                .catch(error => {
+                    console.error('删除账户时发生错误:', error);
+                    alert('❌ 删除账户时发生错误：' + error.message);
+                    // 恢复按钮状态
+                    button.innerHTML = originalText;
+                    button.disabled = false;
+                });
+            }
+        }
+        
+        // 页面加载完成后的初始化
+        document.addEventListener('DOMContentLoaded', function() {
+            // 可以在这里添加其他初始化代码
+            console.log('GDPR数据权利功能已加载');
+            
+            // 检查CSRF令牌是否可用
+            const csrfToken = getCsrfToken();
+            if (csrfToken) {
+                console.log('CSRF令牌已加载');
+            } else {
+                console.warn('CSRF令牌不可用，将使用禁用CSRF的配置');
+            }
+        });
+    </script>
+</body>
+</html>

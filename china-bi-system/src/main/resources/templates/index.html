@@ -1,0 +1,362 @@
+<!DOCTYPE html>
+<html lang="zh-CN" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title th:text="${pageTitle}">全球酒店运营数据概览</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: #333;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+            color: white;
+        }
+        
+        .header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+        
+        .header p {
+            font-size: 1.2rem;
+            opacity: 0.9;
+        }
+        
+        .debug-info {
+            background: rgba(255,255,255,0.1);
+            border-radius: 10px;
+            padding: 20px;
+            margin: 20px 0;
+            color: white;
+            backdrop-filter: blur(10px);
+        }
+        
+        .debug-info h3 {
+            margin-bottom: 15px;
+            color: #ffd700;
+        }
+        
+        .debug-info pre {
+            background: rgba(0,0,0,0.3);
+            padding: 15px;
+            border-radius: 5px;
+            overflow-x: auto;
+            font-size: 12px;
+        }
+        
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        
+        .stat-card {
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            text-align: center;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            transition: transform 0.3s ease;
+        }
+        
+        .stat-card:hover {
+            transform: translateY(-5px);
+        }
+        
+        .stat-card h3 {
+            color: #2c3e50;
+            margin-bottom: 15px;
+            font-size: 1.2rem;
+        }
+        
+        .stat-value {
+            font-size: 2.5rem;
+            font-weight: bold;
+            color: #667eea;
+            margin-bottom: 10px;
+        }
+        
+        .stat-label {
+            color: #7f8c8d;
+            font-size: 1rem;
+        }
+        
+        .region-section {
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            margin-bottom: 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+        }
+        
+        .region-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid #ecf0f1;
+        }
+        
+        .region-title {
+            color: #2c3e50;
+            font-size: 1.5rem;
+            margin: 0;
+        }
+        
+        .region-link {
+            background: #667eea;
+            color: white;
+            padding: 10px 20px;
+            border-radius: 25px;
+            text-decoration: none;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+        
+        .region-link:hover {
+            background: #5a6fd8;
+            transform: translateY(-2px);
+        }
+        
+        .region-stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+        }
+        
+        .region-stat {
+            text-align: center;
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 10px;
+            border-left: 4px solid #667eea;
+        }
+        
+        .region-stat-value {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: #2c3e50;
+            margin-bottom: 5px;
+        }
+        
+        .region-stat-label {
+            color: #7f8c8d;
+            font-size: 0.9rem;
+        }
+        
+        .no-data {
+            text-align: center;
+            background: white;
+            border-radius: 15px;
+            padding: 40px;
+            margin: 30px 0;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+        }
+        
+        .no-data-icon {
+            font-size: 4rem;
+            margin-bottom: 20px;
+        }
+        
+        .no-data h3 {
+            color: #2c3e50;
+            margin-bottom: 15px;
+        }
+        
+        .no-data p {
+            color: #7f8c8d;
+            font-size: 1.1rem;
+        }
+        
+        .navigation {
+            text-align: center;
+            margin: 40px 0;
+        }
+        
+        .nav-buttons {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            flex-wrap: wrap;
+        }
+        
+        .nav-button {
+            background: #667eea;
+            color: white;
+            padding: 15px 30px;
+            border-radius: 25px;
+            text-decoration: none;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+        
+        .nav-button:hover {
+            background: #5a6fd8;
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+        }
+        
+        .data-source-info {
+            background: rgba(255,255,255,0.1);
+            border-radius: 15px;
+            padding: 20px;
+            margin-top: 30px;
+            color: white;
+            backdrop-filter: blur(10px);
+        }
+        
+        .data-source-info h4 {
+            margin-bottom: 15px;
+            font-size: 1.2rem;
+        }
+        
+        .data-source-info p {
+            margin-bottom: 8px;
+            opacity: 0.9;
+        }
+        
+        @media (max-width: 768px) {
+            .container {
+                padding: 15px;
+            }
+            
+            .header h1 {
+                font-size: 2rem;
+            }
+            
+            .nav-buttons {
+                flex-direction: column;
+                align-items: center;
+            }
+            
+            .nav-button {
+                width: 100%;
+                max-width: 300px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- 页面标题 -->
+        <div class="header">
+            <h1>🌍 全球酒店运营数据概览</h1>
+            <p th:text="${currentDate}">2024年12月19日</p>
+        </div>
+
+        <!-- 全局统计概览 -->
+        <div class="stats-grid" th:if="${overview != null}">
+            <div class="stat-card">
+                <h3>🏢 覆盖地区</h3>
+                <div class="stat-value" th:text="${overview.allRegions != null ? overview.allRegions.size() : 0}">0</div>
+                <div class="stat-label">个地区</div>
+            </div>
+            
+            <div class="stat-card">
+                <h3>📊 数据来源</h3>
+                <div class="stat-value">2</div>
+                <div class="stat-label">个系统</div>
+            </div>
+            
+            <div class="stat-card">
+                <h3>🔄 同步状态</h3>
+                <div class="stat-value">实时</div>
+                <div class="stat-label">每15秒更新</div>
+            </div>
+        </div>
+
+        <!-- 各地区数据概览 -->
+        <div th:if="${overview != null and overview.regionOverviews != null and !overview.regionOverviews.isEmpty()}">
+            <div class="region-section" th:each="regionEntry : ${overview.regionOverviews}">
+                <div class="region-header">
+                    <h2 class="region-title">
+                        <span th:switch="${regionEntry.key}">
+                            <span th:case="'EU'">EU地区</span>
+                            <span th:case="'CHINA'">中国地区</span>
+                            <span th:case="'US'">美国地区</span>
+                            <span th:default="其他地区"></span>
+                        </span>
+                    </h2>
+                    <a th:href="@{'/region/' + ${regionEntry.key}}" class="region-link">查看详情</a>
+                </div>
+                
+                <div class="region-stats" th:if="${regionEntry.value != null}">
+                    <!-- 今日收入 -->
+                    <div class="region-stat" th:if="${regionEntry.value.todayIncome != null}">
+                        <div class="region-stat-value" th:text="${'€' + #numbers.formatDecimal(regionEntry.value.todayIncome.totalIncome, 1, 2)}">€0.00</div>
+                        <div class="region-stat-label">今日收入</div>
+                    </div>
+                    
+                    <!-- 今日预订数 -->
+                    <div class="region-stat" th:if="${regionEntry.value.todayIncome != null}">
+                        <div class="region-stat-value" th:text="${regionEntry.value.todayIncome.totalReservations}">0</div>
+                        <div class="region-stat-label">今日预订数</div>
+                    </div>
+                    
+                    <!-- 7天累计收入 -->
+                    <div class="region-stat" th:if="${regionEntry.value.totalRevenue7Days != null}">
+                        <div class="region-stat-value" th:text="${'€' + #numbers.formatDecimal(regionEntry.value.totalRevenue7Days, 1, 2)}">€0.00</div>
+                        <div class="region-stat-label">7天累计收入</div>
+                    </div>
+                    
+                    <!-- 7天累计预订数 -->
+                    <div class="region-stat" th:if="${regionEntry.value.totalReservations7Days != null}">
+                        <div class="region-stat-value" th:text="${regionEntry.value.totalReservations7Days}">0</div>
+                        <div class="region-stat-label">7天累计预订数</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 无数据提示 -->
+        <div class="no-data" th:if="${overview == null or overview.regionOverviews == null or overview.regionOverviews.isEmpty()}">
+            <div class="no-data-icon">📊</div>
+            <h3>暂无数据</h3>
+            <p>当前没有可显示的运营数据，请检查数据同步状态或稍后重试。</p>
+            <div class="debug-info" style="margin-top: 20px;">
+                <h4>调试信息</h4>
+                <p>overview: <span th:text="${overview}">null</span></p>
+                <p>overview.regionOverviews: <span th:text="${overview != null ? overview.regionOverviews : 'N/A'}">N/A</span></p>
+            </div>
+        </div>
+
+        <!-- 导航按钮 -->
+        <div class="navigation">
+            <div class="nav-buttons">
+                <a href="/income" class="nav-button">📊 收入统计报表</a>
+                <a href="/room-types" class="nav-button">🏨 房型分析报表</a>
+                <a href="/data-management" class="nav-button">⚙️ 数据管理</a>
+            </div>
+        </div>
+
+        <!-- 数据来源信息 -->
+        <div class="data-source-info">
+            <h4>📡 数据来源说明</h4>
+            <p>• EU地区数据：来自EU酒店预订系统的实时同步数据（每15秒更新）</p>
+            <p>• 中国地区数据：通过数据库字段区分的地区数据</p>
+            <p>• 数据同步：通过安全的数据同步服务，确保数据完全匿名化</p>
+        </div>
+    </div>
+</body>
+</html>

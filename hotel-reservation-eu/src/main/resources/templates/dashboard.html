@@ -1,0 +1,778 @@
+<!DOCTYPE html>
+<html lang="zh-CN" xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>登录成功 - 欧洲酒店预订系统</title>
+    
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    
+    <style>
+        :root {
+            --primary-color: #2c3e50;
+            --secondary-color: #3498db;
+            --success-color: #27ae60;
+            --light-bg: #f8f9fa;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--light-bg);
+        }
+
+        .navbar-brand {
+            font-weight: bold;
+            color: var(--primary-color) !important;
+        }
+
+        .btn-primary {
+            background-color: var(--secondary-color);
+            border-color: var(--secondary-color);
+        }
+
+        .btn-primary:hover {
+            background-color: #2980b9;
+            border-color: #2980b9;
+        }
+
+        .card {
+            border: none;
+            border-radius: 15px;
+            box-shadow: 0 0 20px rgba(0,0,0,0.1);
+        }
+
+        .welcome-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .success-icon {
+            font-size: 4rem;
+            color: var(--success-color);
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+            100% { transform: scale(1); }
+        }
+
+        .logout-btn {
+            transition: all 0.3s ease;
+        }
+
+        .logout-btn:hover {
+            transform: translateY(-2px);
+        }
+
+        .hover-card {
+            transition: transform 0.2s ease-in-out;
+            border: 1px solid #e9ecef !important;
+            border-radius: 12px !important;
+        }
+
+        .hover-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 6px 30px rgba(0,0,0,0.12) !important;
+        }
+
+        /* 移除或注释掉星级相关的样式 */
+        /* .text-warning {
+            color: #ffc107 !important;
+        } */
+
+        /* 确保搜索结果容器宽度 */
+        #searchResults {
+            width: 100%;
+        }
+
+        /* 响应式调整 */
+        @media (min-width: 768px) {
+            #searchResults .col-md-6 {
+                flex: 0 0 50% !important;
+                max-width: 50% !important;
+            }
+        }
+
+        @media (max-width: 767px) {
+            #searchResults .col-12 {
+                flex: 0 0 100% !important;
+                max-width: 100% !important;
+            }
+        }
+
+        /* 确保卡片高度一致 */
+        .hover-card {
+            min-height: 200px;
+            max-height: 200px;
+        }
+
+        /* 设施标签样式优化 */
+        .badge.bg-light {
+            border: 1px solid #dee2e6;
+            color: #495057 !important;
+        }
+
+        /* 价格区域样式 */
+        .h4.text-primary {
+            font-size: 1.8rem;
+        }
+
+        /* 按钮样式优化 */
+        .btn-lg {
+            padding: 0.75rem 1.5rem;
+            font-size: 1rem;
+            border-radius: 8px;
+        }
+    </style>
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar navbar-expand-lg navbar-light bg-white shadow-sm">
+        <div class="container">
+            <a class="navbar-brand" href="/dashboard">
+                <i class="fas fa-hotel me-2"></i>欧洲酒店预订系统
+            </a>
+            
+            <div class="navbar-nav ms-auto">
+                <div class="nav-item dropdown">
+                    <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
+                        <i class="fas fa-user me-1"></i>
+                        <span sec:authentication="name" th:text="${username}">用户</span>
+                    </a>
+                    <ul class="dropdown-menu">
+                        <li><a class="dropdown-item" href="/auth/logout">
+                            <i class="fas fa-sign-out-alt me-2"></i>退出登录
+                        </a></li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <div class="container mt-5">
+        <!-- Welcome Banner -->
+        <div class="row justify-content-center mb-4">
+            <div class="col-12">
+                <div class="card welcome-card">
+                    <div class="card-body text-center py-4">
+                        <h1 class="card-title mb-3">
+                            <i class="fas fa-hotel me-3"></i>欧洲酒店预订系统
+                        </h1>
+                        <p class="card-text lead mb-3">
+                            欢迎您，<strong sec:authentication="name" th:text="${username}">用户</strong>！
+                        </p>
+                        <p class="card-text">
+                            发现欧洲最美的酒店，享受难忘的住宿体验
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Quick Actions - 移到搜索结果后面 -->
+        <div class="row mb-5">
+            <div class="col-md-6">
+                <div class="card h-100 text-center">
+                    <div class="card-body">
+                        <i class="fas fa-calendar-check fa-3x text-primary mb-3"></i>
+                        <h5 class="card-title">我的预订</h5>
+                        <p class="card-text">查看和管理您的酒店预订</p>
+                        <a href="/reservations/my" class="btn btn-outline-primary">
+                            <i class="fas fa-eye me-1"></i>查看预订
+                        </a>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="card h-100 text-center">
+                    <div class="card-body">
+                        <i class="fas fa-user-edit fa-3x text-info mb-3"></i>
+                        <h5 class="card-title">个人资料</h5>
+                        <p class="card-text">更新您的个人信息和偏好</p>
+                        <a href="/profile" class="btn btn-outline-info">
+                            <i class="fas fa-edit me-1"></i>编辑资料
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Hotel Search Section -->
+        <div class="row justify-content-center mb-5">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-header bg-primary text-white">
+                        <h4 class="mb-0">
+                            <i class="fas fa-search me-2"></i>查找理想住宿
+                        </h4>
+                    </div>
+                    <!-- 修改后的搜索表单部分 -->
+                    <div class="card-body p-4">
+                        <form id="hotelSearchForm" method="GET">
+                            <div class="row g-3">
+                                <!-- 更新酒店分店下拉选择 -->
+                                <div class="col-md-3">
+                                    <label for="branchId" class="form-label">
+                                        <i class="fas fa-building me-1"></i>酒店分店
+                                    </label>
+                                    <select class="form-select" id="branchId" name="branchId" required>
+                                        <option value="">选择分店位置</option>
+                                        <!-- 动态加载分店选项 -->
+                                    </select>
+                                    <div class="invalid-feedback">
+                                        请选择酒店分店
+                                    </div>
+                                </div>
+
+                                <!-- 入住日期 -->
+                                <div class="col-md-3">
+                                    <label for="checkinDate" class="form-label">
+                                        <i class="fas fa-calendar-alt me-1"></i>入住日期
+                                    </label>
+                                    <input type="date" class="form-control" id="checkinDate" name="checkinDate" required>
+                                </div>
+
+                                <!-- 退房日期 -->
+                                <div class="col-md-3">
+                                    <label for="checkoutDate" class="form-label">
+                                        <i class="fas fa-calendar-check me-1"></i>退房日期
+                                    </label>
+                                    <input type="date" class="form-control" id="checkoutDate" name="checkoutDate" required>
+                                </div>
+
+                                <!-- 入住人数 -->
+                                <div class="col-md-2">
+                                    <label for="guests" class="form-label">
+                                        <i class="fas fa-users me-1"></i>入住人数
+                                    </label>
+                                    <select class="form-select" id="guests" name="guests" required>
+                                        <option value="1">1位客人</option>
+                                        <option value="2" selected>2位客人</option>
+                                        <option value="3">3位客人</option>
+                                        <option value="4">4位客人</option>
+                                    </select>
+                                </div>
+
+                                <!-- 搜索按钮 -->
+                                <div class="col-md-1">
+                                    <label class="form-label">&nbsp;</label>
+                                    <button type="submit" class="btn btn-primary w-100">
+                                        <i class="fas fa-search"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Search Results Section - 居中布局 -->
+        <div id="searchResultsSection" class="row mb-5" style="display: none;">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-header bg-success text-white">
+                        <h4 class="mb-0">
+                            <i class="fas fa-search me-2"></i>搜索结果
+                        </h4>
+                    </div>
+                    <div class="card-body">
+                        <!-- Search Summary -->
+                        <div id="searchSummary" class="alert alert-info mb-4">
+                            <!-- 搜索摘要将通过JavaScript填充 -->
+                        </div>
+                        
+                        <!-- Loading State -->
+                        <div id="loadingState" class="text-center py-5" style="display: none;">
+                            <div class="spinner-border text-primary" role="status">
+                                <span class="visually-hidden">搜索中...</span>
+                            </div>
+                            <p class="mt-3">正在搜索酒店...</p>
+                        </div>
+                        
+                        <!-- Search Results - 居中容器 -->
+                        <div class="d-flex justify-content-center">
+                            <div class="w-100" style="max-width: 800px;">
+                                <div id="searchResults" class="row g-3">
+                                    <!-- 搜索结果将通过JavaScript填充 -->
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- No Results -->
+                        <div id="noResults" class="text-center py-5" style="display: none;">
+                            <i class="fas fa-search fa-3x text-muted mb-3"></i>
+                            <h5>暂无搜索结果</h5>
+                            <p class="text-muted">请尝试调整搜索条件或选择其他目的地</p>
+                            <button class="btn btn-primary" onclick="clearSearch()">
+                                <i class="fas fa-redo me-1"></i>重新搜索
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+
+        
+    <!-- Footer -->
+    <footer class="bg-white mt-5 py-4 border-top">
+        <div class="container">
+            <div class="row">
+                <div class="col-md-6">
+                    <p class="text-muted mb-0">
+                        &copy; 2024 欧洲酒店预订系统. 保留所有权利.
+                    </p>
+                </div>
+                <div class="col-md-6 text-end">
+                    <p class="text-muted mb-0">
+                        遵循GDPR数据保护法规
+                    </p>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <script>
+        // 页面加载完成后初始化
+        document.addEventListener('DOMContentLoaded', function() {
+            loadHotelBranches();
+            
+            // 设置日期输入框的最小值为今天
+            const today = new Date().toISOString().split('T')[0];
+            const checkinDate = document.getElementById('checkinDate');
+            const checkoutDate = document.getElementById('checkoutDate');
+            
+            if (checkinDate && checkoutDate) {
+                checkinDate.min = today;
+                checkoutDate.min = today;
+
+                // 设置默认入住日期为明天（当前时间 + 1天）
+                const tomorrow = new Date();
+                tomorrow.setDate(tomorrow.getDate() + 1);
+                checkinDate.value = tomorrow.toISOString().split('T')[0];
+
+                // 设置默认退房日期为后天（当前时间 + 2天）
+                const dayAfterTomorrow = new Date();
+                dayAfterTomorrow.setDate(dayAfterTomorrow.getDate() + 2);
+                checkoutDate.value = dayAfterTomorrow.toISOString().split('T')[0];
+
+                // 入住日期变化时，更新退房日期的最小值
+                checkinDate.addEventListener('change', function() {
+                    const selectedDate = new Date(this.value);
+                    selectedDate.setDate(selectedDate.getDate() + 1);
+                    checkoutDate.min = selectedDate.toISOString().split('T')[0];
+                    
+                    // 如果退房日期早于或等于入住日期，自动设置为入住日期的下一天
+                    if (checkoutDate.value <= this.value) {
+                        checkoutDate.value = selectedDate.toISOString().split('T')[0];
+                    }
+                });
+            }
+
+            // 表单提交验证
+            document.getElementById('hotelSearchForm').addEventListener('submit', function(e) {
+                e.preventDefault(); // 阻止默认表单提交
+                
+                const checkin = new Date(checkinDate.value);
+                const checkout = new Date(checkoutDate.value);
+                
+                if (checkout <= checkin) {
+                    alert('退房日期必须晚于入住日期！');
+                    return false;
+                }
+
+                // 检查入住时间是否超过1年
+                const oneYearLater = new Date();
+                oneYearLater.setFullYear(oneYearLater.getFullYear() + 1);
+                
+                if (checkin > oneYearLater) {
+                    alert('入住日期不能超过一年！');
+                    return false;
+                }
+
+                // 执行AJAX搜索
+                performHotelSearch();
+            });
+
+            // 客人数量和房间数量的智能联动
+            document.getElementById('guests').addEventListener('change', function() {
+                const guests = parseInt(this.value);
+                // 移除房间数量联动逻辑，因为已经删除了rooms字段
+                showTip(`已选择 ${guests} 位客人`);
+            });
+
+            // 快捷操作按钮点击效果
+            document.querySelectorAll('.btn-outline-primary, .btn-outline-info').forEach(btn => {
+                btn.addEventListener('click', function(e) {
+                    // 允许"我的预订"链接正常工作
+                    if (this.href && this.href.includes('/reservations/my')) {
+                        // 不阻止默认行为，允许正常跳转
+                        return;
+                    }
+                    
+                    if (this.href && this.href.includes('/reservations')) {
+                        e.preventDefault();
+                        showTip('此功能正在开发中，敬请期待！');
+                    }
+                });
+            });
+        });
+
+        // 显示提示信息
+        function showTip(message) {
+            // 创建提示框
+            const tip = document.createElement('div');
+            tip.className = 'alert alert-info alert-dismissible fade show position-fixed';
+            tip.style.cssText = 'top: 20px; right: 20px; z-index: 9999; max-width: 300px;';
+            tip.innerHTML = `
+                ${message}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            `;
+            
+            document.body.appendChild(tip);
+            
+            // 3秒后自动消失
+            setTimeout(() => {
+                if (tip.parentNode) {
+                    tip.parentNode.removeChild(tip);
+                }
+            }, 3000);
+        }
+
+        // 高级搜索选项切换效果
+        // function toggleAdvancedSearch() {
+        //     const advancedSearch = document.getElementById('advancedSearch');
+        //     const toggleBtn = document.querySelector('[data-bs-target="#advancedSearch"]');
+            
+        //     advancedSearch.addEventListener('shown.bs.collapse', function() {
+        //         toggleBtn.innerHTML = '<i class="fas fa-cog me-1"></i>收起高级选项';
+        //     });
+            
+        //     advancedSearch.addEventListener('hidden.bs.collapse', function() {
+        //         toggleBtn.innerHTML = '<i class="fas fa-cog me-1"></i>高级搜索选项';
+        //     });
+        // }
+
+        // 初始化高级搜索切换
+        // toggleAdvancedSearch();
+
+        // 执行酒店搜索（AJAX）
+        function performHotelSearch() {
+            // 获取表单数据
+            const formData = new FormData(document.getElementById('hotelSearchForm'));
+            
+            // 添加默认的rooms参数（根据客人数量自动计算）
+            const guests = parseInt(formData.get('guests') || '2');
+            const rooms = Math.ceil(guests / 2); // 每2人一间房
+            formData.append('rooms', rooms);
+            
+            const searchParams = new URLSearchParams(formData);
+            
+            // 显示loading状态
+            showLoadingState();
+            
+            // 执行AJAX请求
+            fetch('/api/search/hotels?' + searchParams.toString())
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('搜索请求失败');
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    // 显示搜索结果
+                    displaySearchResults(data);
+                })
+                .catch(error => {
+                    console.error('搜索错误:', error);
+                    showNoResults();
+                    showTip('搜索失败，请稍后重试');
+                });
+        }
+        
+        // 显示loading状态
+        function showLoadingState() {
+            document.getElementById('searchResultsSection').style.display = 'block';
+            document.getElementById('loadingState').style.display = 'block';
+            document.getElementById('searchResults').style.display = 'none';
+            document.getElementById('noResults').style.display = 'none';
+            
+            // 滚动到结果区域
+            document.getElementById('searchResultsSection').scrollIntoView({ 
+                behavior: 'smooth', 
+                block: 'start' 
+            });
+        }
+        
+        // 显示搜索结果 - 简化版本
+        function displaySearchResults(data) {
+            // 隐藏loading状态
+            document.getElementById('loadingState').style.display = 'none';
+            
+            if (data.hotels && data.hotels.length > 0) {
+                // 显示搜索摘要 - 基于分店信息
+                const branchName = data.hotels.length > 0 ? data.hotels[0].branchName : '所选分店';
+                const branchCity = data.hotels.length > 0 ? data.hotels[0].branchCity : '';
+                const branchCountry = data.hotels.length > 0 ? data.hotels[0].branchCountry : '';
+                const locationText = branchCity && branchCountry ? `${branchName} (${branchCity}, ${branchCountry})` : branchName;
+                
+                document.getElementById('searchSummary').innerHTML = `
+                    <i class="fas fa-building me-2"></i>
+                    <strong>${locationText}</strong> • 
+                    ${data.searchParams.checkinDate} 至 ${data.searchParams.checkoutDate} • 
+                    ${data.searchParams.guests}位客人 • 
+                    找到 <strong>${data.totalResults}</strong> 个房源
+                `;
+                
+                // 显示房型列表
+                const resultsHtml = data.hotels.map(roomType => createHotelCard(roomType)).join('');
+                document.getElementById('searchResults').innerHTML = resultsHtml;
+                document.getElementById('searchResults').style.display = 'block';
+                document.getElementById('noResults').style.display = 'none';
+            } else {
+                showNoResults();
+            }
+        }
+        
+        // 创建房型卡片HTML - 移除库存显示
+        function createHotelCard(roomType) {
+            return `
+                <div class="col-12 mb-4">
+                    <div class="card shadow-sm hover-card" style="max-width: 100%;">
+                        <div class="card-body p-4">
+                            <div class="row align-items-center">
+                                <div class="col-md-4 col-lg-3">
+                                    <img src="${roomType.imageUrl}" 
+                                         class="img-fluid rounded" alt="${roomType.roomTypeName}" 
+                                         style="height: 180px; width: 100%; object-fit: cover;">
+                                </div>
+                                <div class="col-md-8 col-lg-9">
+                                    <div class="row h-100 align-items-center">
+                                        <div class="col-md-8">
+                                            <h5 class="card-title mb-3 text-primary fw-bold">${roomType.roomTypeName}</h5>
+                                            <div class="mb-3">
+                                                <span class="badge bg-success text-white me-2">有房</span>
+                                            </div>
+                                            <div class="mb-3">
+                                                <div class="d-flex flex-wrap gap-3 text-muted">
+                                                    <span><i class="fas fa-expand-arrows-alt me-1 text-primary"></i>${roomType.size}㎡</span>
+                                                    <span><i class="fas fa-bed me-1 text-primary"></i>${roomType.bedType}</span>
+                                                    <span><i class="fas fa-users me-1 text-primary"></i>最多${roomType.maxGuests}人</span>
+                                                </div>
+                                            </div>
+                                            <p class="card-text text-muted mb-3" style="line-height: 1.5;">
+                                                ${roomType.description}
+                                            </p>
+                                            <div class="mb-0">
+                                                <div class="d-flex flex-wrap gap-2">
+                                                    ${roomType.amenities.slice(0, 4).map(amenity => 
+                                                        `<span class="badge bg-light text-dark">${amenity}</span>`
+                                                    ).join('')}
+                                                    ${roomType.amenities.length > 4 ? 
+                                                        `<span class="text-muted">+${roomType.amenities.length - 4}项设施</span>` : ''}
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-4 text-center text-md-end">
+                                            <div class="mb-3">
+                                                <div class="h4 text-primary fw-bold mb-1">€${roomType.price}</div>
+                                                <small class="text-muted">每晚</small>
+                                            </div>
+                                            <button class="btn btn-primary btn-lg px-4" 
+                                                    onclick="selectRoom(${roomType.id}, '${roomType.roomTypeName}', ${roomType.price})">
+                                                <i class="fas fa-check me-2"></i>选择此房型
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+        
+        // 显示无结果状态
+        function showNoResults() {
+            document.getElementById('loadingState').style.display = 'none';
+            document.getElementById('searchResults').style.display = 'none';
+            document.getElementById('noResults').style.display = 'block';
+            document.getElementById('searchSummary').innerHTML = '未找到符合条件的酒店';
+        }
+        
+        // 清除搜索结果
+        function clearSearch() {
+            document.getElementById('searchResultsSection').style.display = 'none';
+            document.getElementById('hotelSearchForm').reset();
+            
+            // 重新设置默认日期
+            const today = new Date().toISOString().split('T')[0];
+            const tomorrow = new Date();
+            tomorrow.setDate(tomorrow.getDate() + 1);
+            
+            document.getElementById('checkinDate').value = tomorrow.toISOString().split('T')[0];
+            document.getElementById('checkoutDate').value = (new Date(tomorrow.getTime() + 24 * 60 * 60 * 1000)).toISOString().split('T')[0];
+        }
+
+        // 选择房型并跳转到预订页面
+        function selectRoom(roomId, roomTypeName, price) {
+            // 获取当前搜索参数
+            const branchId = document.getElementById('branchId').value;
+            const checkinDate = document.getElementById('checkinDate').value;
+            const checkoutDate = document.getElementById('checkoutDate').value;
+            const guests = document.getElementById('guests').value;
+            const rooms = Math.ceil(parseInt(guests) / 2); // 每2人一间房
+            
+            // 构建预订页面URL
+            const bookingUrl = `/reservations/book?` + new URLSearchParams({
+                roomTypeId: roomId,
+                branchId: branchId,
+                checkinDate: checkinDate,
+                checkoutDate: checkoutDate,
+                guests: guests,
+                rooms: rooms,
+                price: price
+            }).toString();
+            
+            // 跳转到预订页面
+            window.location.href = bookingUrl;
+        }
+
+        // 加载酒店分店数据
+        function loadHotelBranches() {
+            fetch('/api/hotel-branches/active')
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        populateBranchOptions(data.data);
+                    } else {
+                        console.error('加载分店列表失败:', data.message);
+                        // 如果API失败，显示错误提示
+                        showBranchLoadError();
+                    }
+                })
+                .catch(error => {
+                    console.error('加载分店列表失败:', error);
+                    showBranchLoadError();
+                });
+        }
+
+        // 填充分店选项
+        function populateBranchOptions(branches) {
+            const destinationSelect = document.getElementById('branchId');
+            
+            // 清空现有选项（保留默认选项）
+            destinationSelect.innerHTML = '<option value="">选择分店位置</option>';
+            
+            // 按国家分组显示分店
+            const branchesByCountry = groupBranchesByCountry(branches);
+            
+            Object.keys(branchesByCountry).sort().forEach(country => {
+                // 创建国家分组
+                const optgroup = document.createElement('optgroup');
+                optgroup.label = getCountryDisplayName(country);
+                
+                branchesByCountry[country].forEach(branch => {
+                    const option = document.createElement('option');
+                    option.value = branch.id;
+                    option.textContent = `${branch.branchName} - ${branch.city}`;
+                    option.setAttribute('data-city', branch.city);
+                    option.setAttribute('data-country', branch.country);
+                    optgroup.appendChild(option);
+                });
+                
+                destinationSelect.appendChild(optgroup);
+            });
+            
+            console.log(`已加载 ${branches.length} 个分店到下拉选择框`);
+        }
+
+        // 按国家分组分店
+        function groupBranchesByCountry(branches) {
+            return branches.reduce((groups, branch) => {
+                const country = branch.country;
+                if (!groups[country]) {
+                    groups[country] = [];
+                }
+                groups[country].push(branch);
+                return groups;
+            }, {});
+        }
+
+        // 获取国家显示名称
+        function getCountryDisplayName(country) {
+            const countryNames = {
+                'Germany': '德国',
+                'France': '法国',
+                'Italy': '意大利',
+                'Spain': '西班牙',
+                'Netherlands': '荷兰',
+                'Austria': '奥地利',
+                'Belgium': '比利时',
+                'Switzerland': '瑞士',
+                'United Kingdom': '英国',
+                'Czech Republic': '捷克'
+            };
+            return countryNames[country] || country;
+        }
+
+        // 显示分店加载错误
+        function showBranchLoadError() {
+            const destinationSelect = document.getElementById('branchId');
+            destinationSelect.innerHTML = `
+                <option value="">选择分店位置</option>
+                <option value="" disabled>加载分店数据失败，请刷新页面重试</option>
+            `;
+        }
+
+        // 获取选中分店的信息
+        function getSelectedBranchInfo() {
+            const destinationSelect = document.getElementById('branchId');
+            const selectedOption = destinationSelect.options[destinationSelect.selectedIndex];
+            
+            if (selectedOption && selectedOption.value) {
+                return {
+                    id: selectedOption.value,
+                    name: selectedOption.textContent,
+                    city: selectedOption.getAttribute('data-city'),
+                    country: selectedOption.getAttribute('data-country')
+                };
+            }
+            return null;
+        }
+
+        // 按国家筛选分店
+        function filterBranchesByCountry() {
+            const countryFilter = document.getElementById('country-filter').value;
+            
+            if (!countryFilter) {
+                loadHotelBranches(); // 显示所有分店
+                return;
+            }
+            
+            fetch(`/api/hotel-branches/by-country/${countryFilter}`)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        populateBranchOptions(data.data);
+                    } else {
+                        console.error('按国家筛选分店失败:', data.message);
+                    }
+                })
+                .catch(error => {
+                    console.error('按国家筛选分店失败:', error);
+                });
+        }
+    </script>
+</body>
+</html> 

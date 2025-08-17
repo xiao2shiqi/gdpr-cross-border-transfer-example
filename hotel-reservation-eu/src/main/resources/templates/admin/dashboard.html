@@ -1,0 +1,363 @@
+<!DOCTYPE html>
+<html lang="zh-CN" xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>运营管理系统 - 仪表板</title>
+    
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    
+    <style>
+        :root {
+            --admin-primary: #2c3e50;
+            --admin-secondary: #34495e;
+            --admin-accent: #e74c3c;
+            --admin-success: #27ae60;
+            --admin-warning: #f39c12;
+            --admin-info: #3498db;
+            --admin-light: #ecf0f1;
+            --admin-dark: #2c3e50;
+        }
+
+        body {
+            background-color: #f8f9fa;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        /* 顶部导航栏 */
+        .admin-navbar {
+            background: linear-gradient(135deg, var(--admin-primary) 0%, var(--admin-secondary) 100%);
+            border-bottom: 3px solid var(--admin-accent);
+            padding: 0;
+            box-shadow: 0 2px 20px rgba(0,0,0,0.1);
+        }
+
+        .admin-navbar .navbar-brand {
+            color: white !important;
+            font-weight: 600;
+            font-size: 1.3rem;
+            padding: 15px 0;
+        }
+
+        .admin-navbar .navbar-nav .nav-link {
+            color: rgba(255,255,255,0.9) !important;
+            padding: 15px 20px !important;
+            transition: all 0.3s ease;
+            border-left: 3px solid transparent;
+        }
+
+        .admin-navbar .navbar-nav .nav-link:hover {
+            color: white !important;
+            background-color: rgba(255,255,255,0.1);
+            border-left-color: var(--admin-accent);
+        }
+
+        .admin-navbar .navbar-nav .nav-link.active {
+            color: white !important;
+            background-color: rgba(255,255,255,0.15);
+            border-left-color: var(--admin-accent);
+        }
+
+        /* 用户信息下拉 */
+        .admin-user-info {
+            color: white !important;
+            padding: 10px 20px !important;
+        }
+
+        .admin-user-info:hover {
+            background-color: rgba(255,255,255,0.1);
+            color: white !important;
+        }
+
+        /* 主要内容区域 */
+        .admin-main-content {
+            padding: 40px 0;
+            min-height: calc(100vh - 120px);
+        }
+
+        /* 欢迎卡片 */
+        .welcome-card {
+            background: linear-gradient(135deg, var(--admin-info) 0%, var(--admin-primary) 100%);
+            color: white;
+            border: none;
+            border-radius: 15px;
+            margin-bottom: 30px;
+        }
+
+        .welcome-card .card-body {
+            padding: 40px;
+        }
+
+        /* 功能模块卡片 */
+        .module-card {
+            border: none;
+            border-radius: 15px;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.08);
+            transition: all 0.3s ease;
+            height: 100%;
+            overflow: hidden;
+        }
+
+        .module-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.15);
+        }
+
+        .module-card .card-header {
+            border: none;
+            padding: 25px 25px 0;
+            background: transparent;
+        }
+
+        .module-card .card-body {
+            padding: 20px 25px 30px;
+        }
+
+        .module-icon {
+            width: 70px;
+            height: 70px;
+            border-radius: 15px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2rem;
+            margin-bottom: 20px;
+            color: white;
+        }
+
+        .module-icon.rooms {
+            background: linear-gradient(135deg, var(--admin-success) 0%, #2ecc71 100%);
+        }
+
+        .module-icon.room-types {
+            background: linear-gradient(135deg, var(--admin-info) 0%, #3498db 100%);
+        }
+
+        .module-icon.orders {
+            background: linear-gradient(135deg, var(--admin-warning) 0%, #f1c40f 100%);
+        }
+
+        .module-icon.branches {
+            background: linear-gradient(135deg, var(--admin-primary) 0%, #34495e 100%);
+        }
+
+        .module-icon.room-sources {
+            background: linear-gradient(135deg, #e67e22 0%, #d35400 100%);
+        }
+
+        .module-btn {
+            border-radius: 10px;
+            padding: 12px 24px;
+            font-weight: 500;
+            transition: all 0.3s ease;
+        }
+
+        .module-btn:hover {
+            transform: translateY(-2px);
+        }
+
+        /* 权限提示 */
+        .permission-badge {
+            font-size: 0.75rem;
+            padding: 4px 8px;
+            border-radius: 6px;
+        }
+
+        /* 响应式设计 */
+        @media (max-width: 768px) {
+            .admin-main-content {
+                padding: 20px 0;
+            }
+            
+            .module-card .card-header,
+            .module-card .card-body {
+                padding: 20px;
+            }
+            
+            .welcome-card .card-body {
+                padding: 30px 20px;
+            }
+        }
+
+        /* 动画效果 */
+        .fade-in {
+            animation: fadeIn 0.6s ease-in;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- 顶部导航栏 -->
+    <nav class="navbar navbar-expand-lg admin-navbar">
+        <div class="container-fluid px-4">
+            <!-- 品牌logo -->
+            <a class="navbar-brand" href="/admin/dashboard">
+                <i class="fas fa-cogs me-2"></i>运营管理系统
+            </a>
+
+            <!-- 导航菜单 -->
+            <div class="navbar-nav me-auto">
+                <a class="nav-link active" href="/admin/dashboard">
+                    <i class="fas fa-chart-pie me-1"></i>仪表板
+                </a>
+                <a class="nav-link" href="/admin/hotel-branches">
+                    <i class="fas fa-building me-1"></i>分店管理
+                </a>
+                <a class="nav-link" href="/admin/room-types">
+                    <i class="fas fa-door-open me-1"></i>房型管理
+                </a>
+                <a class="nav-link" href="/admin/room-type-branch-mappings">
+                    <i class="fas fa-home me-1"></i>房源管理
+                </a>
+                <a class="nav-link" href="/admin/orders">
+                    <i class="fas fa-clipboard-list me-1"></i>订单管理
+                </a>
+            </div>
+
+            <!-- 用户信息 -->
+            <div class="navbar-nav">
+                <div class="nav-item dropdown">
+                    <a class="nav-link dropdown-toggle admin-user-info" href="#" role="button" 
+                       data-bs-toggle="dropdown" aria-expanded="false">
+                        <i class="fas fa-user-circle me-2"></i>
+                        <span th:text="${userDisplayName}">用户名</span>
+                        <span class="permission-badge bg-secondary ms-2" th:text="${userRole?.displayName}">角色</span>
+                    </a>
+                    <ul class="dropdown-menu">
+                        <li><h6 class="dropdown-header">
+                            <i class="fas fa-building me-1"></i>
+                            <span th:text="${userDepartment}">部门</span>
+                        </h6></li>
+                        <li><hr class="dropdown-divider"></li>
+                        <li><a class="dropdown-item" href="/admin/profile">
+                            <i class="fas fa-user-edit me-2"></i>个人设置
+                        </a></li>
+                        <li><hr class="dropdown-divider"></li>
+                        <li><a class="dropdown-item" href="/admin/logout">
+                            <i class="fas fa-sign-out-alt me-2"></i>退出登录
+                        </a></li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- 主要内容区域 -->
+    <div class="container-fluid admin-main-content">
+        <!-- 欢迎信息 -->
+        <div class="row">
+            <div class="col-12">
+                <div class="card welcome-card fade-in">
+                    <div class="card-body">
+                        <div class="row align-items-center">
+                            <div class="col-md-8">
+                                <h2 class="mb-3">
+                                    <i class="fas fa-tachometer-alt me-3"></i>运营管理仪表板
+                                </h2>
+                                <p class="mb-2 fs-5">
+                                    欢迎回来，<strong th:text="${userDisplayName}">管理员</strong>
+                                </p>
+                                <p class="mb-0 opacity-75">
+                                    <i class="fas fa-calendar me-2"></i>
+                                    今天是 <span id="currentDate"></span>
+                                </p>
+                            </div>
+                            <div class="col-md-4 text-center">
+                                <i class="fas fa-chart-line fa-4x opacity-50"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 功能模块 -->
+        <div class="row">
+            <!-- 分店管理 -->
+            <div class="col-lg-4 col-md-6 mb-4">
+                <div class="card module-card fade-in">
+                    <div class="card-header">
+                        <div class="module-icon branches">
+                            <i class="fas fa-building"></i>
+                        </div>
+                        <h4 class="fw-bold mb-2">分店管理</h4>
+                        <p class="text-muted mb-0">管理酒店分店信息配置</p>
+                    </div>
+                    <div class="card-body">
+                        <p class="text-muted mb-3">配置分店信息、位置和状态，用于客户预订时的分店选择。</p>
+                        <a href="/admin/hotel-branches" class="btn btn-primary module-btn w-100">
+                            <i class="fas fa-arrow-right me-2"></i>进入分店管理
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 房型管理 -->
+            <div class="col-lg-4 col-md-6 mb-4">
+                <div class="card module-card fade-in">
+                    <div class="card-header">
+                        <div class="module-icon room-types">
+                            <i class="fas fa-door-open"></i>
+                        </div>
+                        <h4 class="fw-bold mb-2">房型管理</h4>
+                        <p class="text-muted mb-0">管理酒店房型和价格配置</p>
+                    </div>
+                    <div class="card-body">
+                        <p class="text-muted mb-3">配置不同房型的信息、价格、设施和可用性设置。</p>
+                        <a href="/admin/room-types" class="btn btn-info module-btn w-100">
+                            <i class="fas fa-arrow-right me-2"></i>进入房型管理
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 房源管理 -->
+            <div class="col-lg-4 col-md-6 mb-4">
+                <div class="card module-card fade-in">
+                    <div class="card-header">
+                        <div class="module-icon room-sources">
+                            <i class="fas fa-home"></i>
+                        </div>
+                        <h4 class="fw-bold mb-2">房源管理</h4>
+                        <p class="text-muted mb-0">管理各分店房源信息和库存</p>
+                    </div>
+                    <div class="card-body">
+                        <p class="text-muted mb-3">配置房型在不同分店的发布情况、价格策略和房间库存。</p>
+                        <a href="/admin/room-type-branch-mappings" class="btn btn-dark module-btn w-100">
+                            <i class="fas fa-arrow-right me-2"></i>进入房源管理
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // 设置当前日期
+        document.addEventListener('DOMContentLoaded', function() {
+            const currentDate = new Date().toLocaleDateString('zh-CN', {
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric',
+                weekday: 'long'
+            });
+            document.getElementById('currentDate').textContent = currentDate;
+        });
+    </script>
+</body>
+</html> 

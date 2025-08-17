@@ -1,0 +1,593 @@
+<!DOCTYPE html>
+<html lang="zh-CN" xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>预订房间 - 欧洲酒店预订系统</title>
+    
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    
+    <style>
+        :root {
+            --primary-color: #2c3e50;
+            --secondary-color: #3498db;
+            --success-color: #27ae60;
+            --warning-color: #f39c12;
+            --danger-color: #e74c3c;
+            --light-bg: #f8f9fa;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--light-bg);
+        }
+
+        .navbar-brand {
+            font-weight: bold;
+            color: var(--primary-color) !important;
+        }
+
+        .btn-primary {
+            background-color: var(--secondary-color);
+            border-color: var(--secondary-color);
+        }
+
+        .btn-primary:hover {
+            background-color: #2980b9;
+            border-color: #2980b9;
+        }
+
+        .card {
+            border: none;
+            border-radius: 15px;
+            box-shadow: 0 0 20px rgba(0,0,0,0.1);
+        }
+
+        .booking-summary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .form-control:focus {
+            border-color: var(--secondary-color);
+            box-shadow: 0 0 0 0.2rem rgba(52, 152, 219, 0.25);
+        }
+
+        .payment-method-card {
+            border: 2px solid #e9ecef;
+            border-radius: 10px;
+            padding: 15px;
+            margin-bottom: 15px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .payment-method-card:hover {
+            border-color: var(--secondary-color);
+            background-color: #f8f9fa;
+        }
+
+        .payment-method-card.selected {
+            border-color: var(--secondary-color);
+            background-color: #e3f2fd;
+        }
+
+        .price-breakdown {
+            background-color: #f8f9fa;
+            border-radius: 10px;
+            padding: 20px;
+        }
+
+        .total-price {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: var(--success-color);
+        }
+    </style>
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar navbar-expand-lg navbar-light bg-white shadow-sm">
+        <div class="container">
+            <a class="navbar-brand" href="/dashboard">
+                <i class="fas fa-hotel me-2"></i>欧洲酒店预订系统
+            </a>
+            <div class="navbar-nav ms-auto">
+                <a class="nav-link" href="/dashboard">
+                    <i class="fas fa-home me-1"></i>返回首页
+                </a>
+                <a class="nav-link" href="/reservations/my">
+                    <i class="fas fa-list me-1"></i>我的预订
+                </a>
+                <a class="nav-link" href="/auth/logout">
+                    <i class="fas fa-sign-out-alt me-1"></i>退出登录
+                </a>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container mt-4">
+        <div class="row">
+            <!-- 预订表单 -->
+            <div class="col-lg-8">
+                <div class="card mb-4">
+                    <div class="card-header bg-primary text-white">
+                        <h4 class="mb-0">
+                            <i class="fas fa-credit-card me-2"></i>填写预订信息
+                        </h4>
+                    </div>
+                    <div class="card-body p-4">
+                        <!-- 房型信息展示 -->
+                        <div class="row mb-4">
+                            <div class="col-md-4">
+                                <img th:src="${roomType.imageUrl}" 
+                                     class="img-fluid rounded" 
+                                     th:alt="${roomType.typeName}"
+                                     style="height: 150px; width: 100%; object-fit: cover;">
+                            </div>
+                            <div class="col-md-8">
+                                <h5 class="text-primary" th:text="${roomType.typeName}">房型名称</h5>
+                                <p class="text-muted" th:text="${roomType.description}">房型描述</p>
+                                <div class="d-flex flex-wrap gap-3 text-muted mb-2">
+                                    <span><i class="fas fa-expand-arrows-alt me-1 text-primary"></i><span th:text="${roomType.size}">35</span>㎡</span>
+                                    <span><i class="fas fa-bed me-1 text-primary"></i><span th:text="${roomType.bedType}">1张大床</span></span>
+                                    <span><i class="fas fa-users me-1 text-primary"></i>最多<span th:text="${roomType.maxGuests}">2</span>人</span>
+                                </div>
+                                <div class="d-flex flex-wrap gap-2">
+                                    <span class="badge bg-light text-dark" 
+                                          th:each="amenity : ${#strings.arraySplit(roomType.amenities, ',')}" 
+                                          th:text="${#strings.trim(amenity)}">设施</span>
+                                </div>
+                            </div>
+                        </div>
+                        <hr class="my-4">
+                        <form id="bookingForm">
+                            <!-- 联系信息 -->
+                            <h5 class="mb-3 text-primary">
+                                <i class="fas fa-user me-2"></i>联系信息
+                            </h5>
+                            <div class="row g-3 mb-4">
+                                <div class="col-md-6">
+                                    <label for="contactName" class="form-label">联系人姓名 *</label>
+                                    <input type="text" class="form-control" id="contactName" name="contactName" 
+                                           th:value="${currentUser.firstName + ' ' + currentUser.lastName}" required readonly>
+                                    <small class="text-muted">已从您的账户信息自动填充</small>
+                                </div>
+                                <div class="col-md-6">
+                                    <label for="contactPhone" class="form-label">联系电话 *</label>
+                                    <input type="tel" class="form-control" id="contactPhone" name="contactPhone" 
+                                           th:value="${currentUser.phoneNumber}" required readonly>
+                                    <small class="text-muted">已从您的账户信息自动填充</small>
+                                </div>
+                                <div class="col-12">
+                                    <label for="contactEmail" class="form-label">联系邮箱 *</label>
+                                    <input type="email" class="form-control" id="contactEmail" name="contactEmail" 
+                                           th:value="${currentUser.email}" required readonly>
+                                    <small class="text-muted">已从您的账户信息自动填充</small>
+                                </div>
+                            </div>
+                            
+                            <!-- 联系信息更新提示 -->
+                            <div class="alert alert-info mb-4">
+                                <div class="d-flex align-items-center">
+                                    <i class="fas fa-info-circle me-2"></i>
+                                    <div>
+                                        <strong>联系信息说明</strong>
+                                        <p class="mb-1 mt-2">系统已自动从您的账户信息中获取联系信息。如需更新，请前往 <a href="/profile" class="alert-link">个人资料</a> 页面进行修改。</p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- 特殊要求 -->
+                            <h5 class="mb-3 text-primary">
+                                <i class="fas fa-comment me-2"></i>特殊要求
+                            </h5>
+                            <div class="mb-4">
+                                <label for="specialRequests" class="form-label">特殊要求（可选）</label>
+                                <textarea class="form-control" id="specialRequests" name="specialRequests" rows="3" 
+                                          placeholder="请告诉我们您的特殊需求，如无烟房、高楼层等"></textarea>
+                            </div>
+
+                            <!-- 支付方式 -->
+                            <h5 class="mb-3 text-primary">
+                                <i class="fas fa-credit-card me-2"></i>选择支付方式
+                            </h5>
+                            <div class="mb-4">
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <div class="payment-method-card" data-method="CREDIT_CARD">
+                                            <div class="d-flex align-items-center">
+                                                <i class="fas fa-credit-card fa-2x text-primary me-3"></i>
+                                                <div>
+                                                    <h6 class="mb-1">信用卡</h6>
+                                                    <small class="text-muted">Visa, MasterCard, American Express</small>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="payment-method-card" data-method="DEBIT_CARD">
+                                            <div class="d-flex align-items-center">
+                                                <i class="fas fa-credit-card fa-2x text-success me-3"></i>
+                                                <div>
+                                                    <h6 class="mb-1">借记卡</h6>
+                                                    <small class="text-muted">支持所有主要银行</small>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="payment-method-card" data-method="PAYPAL">
+                                            <div class="d-flex align-items-center">
+                                                <i class="fas fa-paypal fa-2x text-info me-3"></i>
+                                                <div>
+                                                    <h6 class="mb-1">PayPal</h6>
+                                                    <small class="text-muted">安全便捷的在线支付</small>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="payment-method-card" data-method="BANK_TRANSFER">
+                                            <div class="d-flex align-items-center">
+                                                <i class="fas fa-university fa-2x text-warning me-3"></i>
+                                                <div>
+                                                    <h6 class="mb-1">银行转账</h6>
+                                                    <small class="text-muted">3-5个工作日到账</small>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- 隐藏字段 -->
+                            <input type="hidden" id="roomTypeId" name="roomTypeId" th:value="${roomTypeId}">
+                            <input type="hidden" id="branchId" name="branchId" th:value="${branchId}">
+                            <input type="hidden" id="checkinDate" name="checkinDate" th:value="${checkinDate}">
+                            <input type="hidden" id="checkoutDate" name="checkoutDate" th:value="${checkoutDate}">
+                            <input type="hidden" id="guests" name="guests" th:value="${guests}">
+                            <input type="hidden" id="rooms" name="rooms" th:value="${rooms}">
+                            <input type="hidden" id="pricePerNight" name="pricePerNight" th:value="${price}">
+                            <input type="hidden" id="effectivePrice" name="effectivePrice" th:value="${price}">
+                            <input type="hidden" id="basePrice" name="basePrice" th:value="${roomType.basePrice}">
+                            <input type="hidden" id="paymentMethod" name="paymentMethod" value="CREDIT_CARD">
+
+                            <!-- 提交按钮 -->
+                            <div class="text-center">
+                                <button type="submit" class="btn btn-primary btn-lg px-5" id="submitBtn">
+                                    <i class="fas fa-check me-2"></i>确认预订
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 预订摘要 -->
+            <div class="col-lg-4">
+                <div class="card booking-summary mb-4">
+                    <div class="card-body p-4">
+                        <h5 class="mb-3 text-white">
+                            <i class="fas fa-info-circle me-2"></i>预订摘要
+                        </h5>
+                        <div class="mb-3">
+                            <strong>房型：</strong>
+                            <span id="roomTypeName" th:text="${roomType.typeName}"></span>
+                        </div>
+                        <div class="mb-3">
+                            <strong>分店：</strong>
+                            <span id="branchName" th:text="${hotelBranch.branchName + ' - ' + hotelBranch.city + ', ' + hotelBranch.country}"></span>
+                        </div>
+                        <div class="mb-3">
+                            <strong>入住：</strong>
+                            <span id="checkinDisplay" th:text="${checkinDate}"></span>
+                        </div>
+                        <div class="mb-3">
+                            <strong>退房：</strong>
+                            <span id="checkoutDisplay" th:text="${checkoutDate}"></span>
+                        </div>
+                        <div class="mb-3">
+                            <strong>客人：</strong>
+                            <span id="guestsDisplay" th:text="${guests} + '人'"></span>
+                        </div>
+                        <div class="mb-3">
+                            <strong>房间：</strong>
+                            <span id="roomsDisplay" th:text="${rooms} + '间'"></span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 价格明细 -->
+                <div class="card">
+                    <div class="card-body p-4">
+                        <h5 class="mb-3 text-primary">
+                            <i class="fas fa-calculator me-2"></i>价格明细
+                        </h5>
+                        <div class="price-breakdown">
+                            <div class="d-flex justify-content-between mb-2">
+                                <span>每晚价格：</span>
+                                <span>€<span id="pricePerNightDisplay" th:text="${price}">150.00</span></span>
+                            </div>
+                            <!-- 价格来源说明 -->
+                            <div class="d-flex justify-content-between mb-2" th:if="${price != roomType.basePrice}">
+                                <span class="text-muted small">
+                                    <i class="fas fa-info-circle me-1"></i>分店特定价格
+                                </span>
+                                <span class="text-muted small">
+                                    原价：€<span th:text="${roomType.basePrice}">120.00</span>
+                                </span>
+                            </div>
+                            <div class="d-flex justify-content-between mb-2" th:if="${price == roomType.basePrice}">
+                                <span class="text-muted small">
+                                    <i class="fas fa-info-circle me-1"></i>房型基础价格
+                                </span>
+                            </div>
+                            <div class="d-flex justify-content-between mb-2">
+                                <span>房间数量：</span>
+                                <span id="roomsCountDisplay" th:text="${rooms}"></span>
+                            </div>
+                            <div class="d-flex justify-content-between mb-2">
+                                <span>入住天数：</span>
+                                <span id="nightsDisplay"></span>
+                            </div>
+                            <hr>
+                            <div class="d-flex justify-content-between total-price">
+                                <span>总价格：</span>
+                                <span>€<span id="totalPriceDisplay"></span></span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 支付确认模态框 -->
+    <div class="modal fade" id="paymentModal" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header bg-primary text-white">
+                    <h5 class="modal-title">
+                        <i class="fas fa-credit-card me-2"></i>支付确认
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="text-center mb-4">
+                        <div class="spinner-border text-primary mb-3" role="status" id="paymentSpinner">
+                            <span class="visually-hidden">处理中...</span>
+                        </div>
+                        <h5 id="paymentStatus">正在处理支付...</h5>
+                        <p class="text-muted" id="paymentMessage">请稍候，正在验证您的支付信息</p>
+                    </div>
+                </div>
+                <div class="modal-footer" id="paymentModalFooter" style="display: none;">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">关闭</button>
+                    <a href="/reservations/my" class="btn btn-primary" id="viewReservationsBtn">
+                        <i class="fas fa-list me-2"></i>查看我的预订
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <script>
+        // 页面加载完成后初始化
+        document.addEventListener('DOMContentLoaded', function() {
+            initializePage();
+            setupEventListeners();
+            calculateTotalPrice();
+        });
+
+        // 初始化页面
+        function initializePage() {
+            // 设置默认支付方式
+            document.querySelector('[data-method="CREDIT_CARD"]').classList.add('selected');
+        }
+
+        // 设置事件监听器
+        function setupEventListeners() {
+            // 支付方式选择
+            document.querySelectorAll('.payment-method-card').forEach(card => {
+                card.addEventListener('click', function() {
+                    // 移除其他选中状态
+                    document.querySelectorAll('.payment-method-card').forEach(c => c.classList.remove('selected'));
+                    // 添加当前选中状态
+                    this.classList.add('selected');
+                    // 更新隐藏字段
+                    document.getElementById('paymentMethod').value = this.dataset.method;
+                });
+            });
+
+            // 表单提交
+            document.getElementById('bookingForm').addEventListener('submit', function(e) {
+                e.preventDefault();
+                submitBooking();
+            });
+        }
+
+        // 获取CSRF令牌
+        function getCsrfToken() {
+            // 从Cookie中获取CSRF令牌
+            const cookies = document.cookie.split(';');
+            for (let cookie of cookies) {
+                const [name, value] = cookie.trim().split('=');
+                if (name === 'XSRF-TOKEN') {
+                    return decodeURIComponent(value);
+                }
+            }
+            return '';
+        }
+
+        // 计算总价格
+        function calculateTotalPrice() {
+            const pricePerNight = parseFloat(document.getElementById('pricePerNight').value);
+            const rooms = parseInt(document.getElementById('rooms').value);
+            const checkinDate = new Date(document.getElementById('checkinDate').value);
+            const checkoutDate = new Date(document.getElementById('checkoutDate').value);
+            const nights = Math.ceil((checkoutDate - checkinDate) / (1000 * 60 * 60 * 24));
+            
+            const totalPrice = pricePerNight * rooms * nights;
+            document.getElementById('totalPriceDisplay').textContent = totalPrice.toFixed(2);
+            
+            // 更新入住天数显示
+            document.getElementById('nightsDisplay').textContent = nights + '晚';
+        }
+
+        // 提交预订
+        function submitBooking() {
+            const submitBtn = document.getElementById('submitBtn');
+            const originalText = submitBtn.innerHTML;
+            
+            // 禁用提交按钮
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>处理中...';
+            
+            // 收集表单数据
+            const formData = new FormData(document.getElementById('bookingForm'));
+            const bookingData = Object.fromEntries(formData.entries());
+            
+            // 验证必填字段
+            if (!validateForm(bookingData)) {
+                resetSubmitButton(submitBtn, originalText);
+                return;
+            }
+            
+            // 获取CSRF令牌
+            const csrfToken = getCsrfToken();
+            console.log('CSRF Token:', csrfToken);
+            console.log('User authenticated:', document.cookie.includes('JSESSIONID'));
+            
+            // 发送预订请求
+            fetch('/reservations/api/create', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-XSRF-TOKEN': csrfToken
+                },
+                body: JSON.stringify(bookingData)
+            })
+            .then(response => {
+                if (!response.ok) {
+                    if (response.status === 403) {
+                        throw new Error('权限不足，请重新登录');
+                    } else if (response.status === 400) {
+                        throw new Error('请求数据无效');
+                    } else if (response.status === 401) {
+                        throw new Error('用户未认证，请重新登录');
+                    } else {
+                        throw new Error(`服务器错误 (${response.status})`);
+                    }
+                }
+                return response.json();
+            })
+            .then(data => {
+                if (data.id) {
+                    // 预订成功，显示支付确认
+                    showPaymentConfirmation(data);
+                } else {
+                    throw new Error(data.message || '预订失败');
+                }
+            })
+            .catch(error => {
+                console.error('预订失败:', error);
+                alert('预订失败: ' + error.message);
+                resetSubmitButton(submitBtn, originalText);
+            });
+        }
+
+        // 验证表单
+        function validateForm(data) {
+            // 联系信息已自动填充，无需验证
+            if (!data.paymentMethod) {
+                alert('请选择支付方式');
+                return false;
+            }
+            
+            return true;
+        }
+
+        // 重置提交按钮
+        function resetSubmitButton(button, originalText) {
+            button.disabled = false;
+            button.innerHTML = originalText;
+        }
+
+        // 显示支付确认
+        function showPaymentConfirmation(reservation) {
+            const modal = new bootstrap.Modal(document.getElementById('paymentModal'));
+            modal.show();
+            
+            // 模拟支付处理
+            setTimeout(() => {
+                processPayment(reservation.id);
+            }, 2000);
+        }
+
+        // 处理支付
+        function processPayment(reservationId) {
+            const paymentMethod = document.getElementById('paymentMethod').value;
+            const csrfToken = getCsrfToken();
+            
+            fetch(`/reservations/api/${reservationId}/payment`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                    'X-XSRF-TOKEN': csrfToken
+                },
+                body: `paymentMethod=${paymentMethod}`
+            })
+            .then(response => {
+                console.log('支付API响应状态:', response.status);
+                console.log('支付API响应头:', response.headers);
+                
+                // 检查Content-Type，如果是纯文本则使用text()，否则使用json()
+                const contentType = response.headers.get('content-type');
+                if (contentType && contentType.includes('application/json')) {
+                    return response.json();
+                } else {
+                    // 后端返回的是纯文本字符串，使用text()
+                    return response.text();
+                }
+            })
+            .then(data => {
+                console.log('支付API响应数据:', data);
+                // 隐藏加载状态
+                document.getElementById('paymentSpinner').style.display = 'none';
+                
+                if (data === '支付成功') {
+                    // 支付成功
+                    document.getElementById('paymentStatus').innerHTML = 
+                        '<i class="fas fa-check-circle text-success me-2"></i>支付成功！';
+                    document.getElementById('paymentMessage').textContent = 
+                        '您的预订已确认，感谢您的预订！';
+                    document.getElementById('paymentModalFooter').style.display = 'block';
+                } else {
+                    // 支付失败
+                    document.getElementById('paymentStatus').innerHTML = 
+                        '<i class="fas fa-times-circle text-danger me-2"></i>支付失败';
+                    document.getElementById('paymentMessage').textContent = 
+                        `支付处理失败: ${data}，请稍后重试或联系客服。`;
+                    document.getElementById('paymentModalFooter').style.display = 'block';
+                }
+            })
+            .catch(error => {
+                console.error('支付处理失败:', error);
+                document.getElementById('paymentSpinner').style.display = 'none';
+                document.getElementById('paymentStatus').innerHTML = 
+                    '<i class="fas fa-times-circle text-danger me-2"></i>支付失败';
+                document.getElementById('paymentMessage').textContent = 
+                    '支付处理失败，请稍后重试或联系客服。';
+                document.getElementById('paymentModalFooter').style.display = 'block';
+            });
+        }
+    </script>
+</body>
+</html>

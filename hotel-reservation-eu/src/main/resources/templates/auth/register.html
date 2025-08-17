@@ -1,0 +1,685 @@
+<!DOCTYPE html>
+<html lang="zh-CN" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>用户注册 - 欧洲酒店预订系统</title>
+    
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    
+    <style>
+        :root {
+            --primary-color: #2c3e50;
+            --secondary-color: #3498db;
+            --success-color: #27ae60;
+            --danger-color: #e74c3c;
+            --warning-color: #f39c12;
+            --light-bg: #f8f9fa;
+            --dark-text: #2c3e50;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--light-bg);
+        }
+
+        .btn-primary {
+            background-color: var(--secondary-color);
+            border-color: var(--secondary-color);
+        }
+
+        .btn-primary:hover {
+            background-color: #2980b9;
+            border-color: #2980b9;
+        }
+
+        .card {
+            border: none;
+            border-radius: 15px;
+            box-shadow: 0 0 20px rgba(0,0,0,0.1);
+        }
+
+        .form-control:focus {
+            border-color: var(--secondary-color);
+            box-shadow: 0 0 0 0.2rem rgba(52, 152, 219, 0.25);
+        }
+
+        .auth-container {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 20px 0;
+        }
+
+        .auth-card {
+            max-width: 600px;
+            width: 100%;
+            margin: 20px;
+        }
+
+        .alert {
+            border-radius: 10px;
+        }
+
+        .form-label {
+            font-weight: 600;
+            color: var(--dark-text);
+        }
+
+        .text-decoration-none:hover {
+            text-decoration: underline !important;
+        }
+
+        .spinner-border-sm {
+            width: 1rem;
+            height: 1rem;
+        }
+    </style>
+</head>
+<body>
+    <main class="auth-container">
+        <div class="auth-card">
+            <div class="card">
+                <div class="card-header bg-white text-center py-4">
+                    <h2 class="mb-0">
+                        <i class="fas fa-user-plus text-primary me-2"></i>
+                        创建新账户
+                    </h2>
+                    <p class="text-muted mb-0">请填写以下信息完成注册</p>
+                </div>
+                
+                <div class="card-body p-4">
+                    <!-- 错误消息 -->
+                    <div th:if="${errorMessage}" class="alert alert-danger alert-dismissible fade show" role="alert">
+                        <i class="fas fa-exclamation-circle me-2"></i>
+                        <span th:text="${errorMessage}"></span>
+                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                    </div>
+                    
+                    <!-- 测试数据填充按钮 -->
+                    <div class="mb-3 text-center">
+                        <button type="button" class="btn btn-outline-info" id="fillTestDataBtn">
+                            <i class="fas fa-magic me-2"></i>填充测试数据
+                        </button>
+                        <small class="d-block text-muted mt-2">
+                            <i class="fas fa-info-circle me-1"></i>
+                            点击此按钮将自动填充一个随机的测试用户信息
+                        </small>
+                    </div>
+                    
+                    <!-- 注册表单 -->
+                    <form th:action="@{/auth/register}" method="post" th:object="${registerRequest}" id="registerForm">
+                        <!-- 添加CSRF令牌 -->
+                        <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+                        
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="username" class="form-label">
+                                    <i class="fas fa-user me-2"></i>用户名 <span class="text-danger">*</span>
+                                </label>
+                                <input type="text" 
+                                       class="form-control" 
+                                       id="username" 
+                                       th:field="*{username}"
+                                       placeholder="3-20个字符"
+                                       required>
+                                <div class="form-text">
+                                    <small id="usernameAvailability"></small>
+                                </div>
+                                <div th:if="${#fields.hasErrors('username')}" class="text-danger">
+                                    <small th:errors="*{username}"></small>
+                                </div>
+                            </div>
+                            
+                            <div class="col-md-6 mb-3">
+                                <label for="email" class="form-label">
+                                    <i class="fas fa-envelope me-2"></i>邮箱地址 <span class="text-danger">*</span>
+                                </label>
+                                <input type="email" 
+                                       class="form-control" 
+                                       id="email" 
+                                       th:field="*{email}"
+                                       placeholder="your@email.com"
+                                       required>
+                                <div class="form-text">
+                                    <small id="emailAvailability"></small>
+                                </div>
+                                <div th:if="${#fields.hasErrors('email')}" class="text-danger">
+                                    <small th:errors="*{email}"></small>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="password" class="form-label">
+                                    <i class="fas fa-lock me-2"></i>密码 <span class="text-danger">*</span>
+                                </label>
+                                <div class="input-group">
+                                    <input type="password" 
+                                           class="form-control" 
+                                           id="password" 
+                                           th:field="*{password}"
+                                           placeholder="至少6个字符"
+                                           required>
+                                    <button type="button" class="btn btn-outline-secondary" id="togglePassword">
+                                        <i class="fas fa-eye"></i>
+                                    </button>
+                                </div>
+                                <div th:if="${#fields.hasErrors('password')}" class="text-danger">
+                                    <small th:errors="*{password}"></small>
+                                </div>
+                            </div>
+                            
+                            <div class="col-md-6 mb-3">
+                                <label for="confirmPassword" class="form-label">
+                                    <i class="fas fa-lock me-2"></i>确认密码 <span class="text-danger">*</span>
+                                </label>
+                                <div class="input-group">
+                                    <input type="password" 
+                                           class="form-control" 
+                                           id="confirmPassword" 
+                                           th:field="*{confirmPassword}"
+                                           placeholder="重复输入密码"
+                                           required>
+                                    <button type="button" class="btn btn-outline-secondary" id="toggleConfirmPassword">
+                                        <i class="fas fa-eye"></i>
+                                    </button>
+                                </div>
+                                <div class="form-text">
+                                    <small id="passwordMatch"></small>
+                                </div>
+                                <div th:if="${#fields.hasErrors('confirmPassword')}" class="text-danger">
+                                    <small th:errors="*{confirmPassword}"></small>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="firstName" class="form-label">
+                                    <i class="fas fa-id-card me-2"></i>名字 <span class="text-danger">*</span>
+                                </label>
+                                <input type="text" 
+                                       class="form-control" 
+                                       id="firstName" 
+                                       th:field="*{firstName}"
+                                       placeholder="您的名字"
+                                       required>
+                                <div th:if="${#fields.hasErrors('firstName')}" class="text-danger">
+                                    <small th:errors="*{firstName}"></small>
+                                </div>
+                            </div>
+                            
+                            <div class="col-md-6 mb-3">
+                                <label for="lastName" class="form-label">
+                                    <i class="fas fa-id-card me-2"></i>姓氏 <span class="text-danger">*</span>
+                                </label>
+                                <input type="text" 
+                                       class="form-control" 
+                                       id="lastName" 
+                                       th:field="*{lastName}"
+                                       placeholder="您的姓氏"
+                                       required>
+                                <div th:if="${#fields.hasErrors('lastName')}" class="text-danger">
+                                    <small th:errors="*{lastName}"></small>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="phoneNumber" class="form-label">
+                                    <i class="fas fa-phone me-2"></i>电话号码
+                                </label>
+                                <input type="tel" 
+                                       class="form-control" 
+                                       id="phoneNumber" 
+                                       th:field="*{phoneNumber}"
+                                       placeholder="+1234567890">
+                                <div th:if="${#fields.hasErrors('phoneNumber')}" class="text-danger">
+                                    <small th:errors="*{phoneNumber}"></small>
+                                </div>
+                            </div>
+                            
+                            <div class="col-md-6 mb-3">
+                                <label for="dateOfBirth" class="form-label">
+                                    <i class="fas fa-calendar me-2"></i>出生日期
+                                </label>
+                                <input type="date" 
+                                       class="form-control" 
+                                       id="dateOfBirth" 
+                                       th:field="*{dateOfBirth}">
+                                <div th:if="${#fields.hasErrors('dateOfBirth')}" class="text-danger">
+                                    <small th:errors="*{dateOfBirth}"></small>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="nationality" class="form-label">
+                                    <i class="fas fa-flag me-2"></i>国籍
+                                </label>
+                                <input type="text" 
+                                       class="form-control" 
+                                       id="nationality" 
+                                       th:field="*{nationality}"
+                                       placeholder="例如：德国">
+                                <div th:if="${#fields.hasErrors('nationality')}" class="text-danger">
+                                    <small th:errors="*{nationality}"></small>
+                                </div>
+                            </div>
+                            
+                            <div class="col-md-6 mb-3">
+                                <label for="address" class="form-label">
+                                    <i class="fas fa-map-marker-alt me-2"></i>地址
+                                </label>
+                                <input type="text" 
+                                       class="form-control" 
+                                       id="address" 
+                                       th:field="*{address}"
+                                       placeholder="您的居住地址">
+                                <div th:if="${#fields.hasErrors('address')}" class="text-danger">
+                                    <small th:errors="*{address}"></small>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- GDPR 数据保护信息和同意 -->
+                        <div class="card border-info mb-4">
+                            <div class="card-header bg-info text-white">
+                                <h6 class="mb-0">
+                                    <i class="fas fa-shield-alt me-2"></i>数据保护信息（GDPR要求）
+                                </h6>
+                            </div>
+                            <div class="card-body">
+                                <div class="mb-3">
+                                    <h6 class="text-primary">我们收集哪些个人信息？</h6>
+                                    <ul class="small">
+                                        <li>身份信息：姓名、用户名、邮箱地址</li>
+                                        <li>联系信息：电话号码、地址</li>
+                                        <li>其他信息：国籍（用于服务定制）</li>
+                                    </ul>
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <h6 class="text-primary">为什么收集这些信息？</h6>
+                                    <ul class="small">
+                                        <li><strong>合同履行</strong>：为您提供酒店预订服务（GDPR第6条1款b项）</li>
+                                        <li><strong>合法利益</strong>：账户安全管理和客户服务（GDPR第6条1款f项）</li>
+                                        <li><strong>法律义务</strong>：反洗钱和税务申报要求（GDPR第6条1款c项）</li>
+                                    </ul>
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <h6 class="text-primary">您的权利</h6>
+                                    <p class="small">
+                                        根据GDPR，您享有以下权利：访问权（第15条）、更正权（第16条）、
+                                        删除权/被遗忘权（第17条）、限制处理权（第18条）、数据可携权（第20条）
+                                        和反对权（第21条）。如需行使这些权利，请联系：
+                                        <a href="mailto:privacy@hoteleu.com">privacy@hoteleu.com</a>
+                                    </p>
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <h6 class="text-primary">数据存储和传输</h6>
+                                    <p class="small">
+                                        您的数据将在欧盟境内安全存储，保存期限为账户激活期间加7年（符合商业记录保存要求）。
+                                        我们采用行业标准加密技术保护您的数据安全。
+                                    </p>
+                                </div>
+                                
+                                <div class="row">
+                                    <div class="col-12 mb-3">
+                                        <div class="form-check">
+                                            <input type="checkbox" class="form-check-input" id="gdprProcessing" name="gdprProcessing" required>
+                                            <label class="form-check-label small" for="gdprProcessing">
+                                                <strong>必需同意：</strong>我同意处理我的个人数据以履行酒店预订服务合同，
+                                                并理解这是提供服务的必要条件（GDPR第6条1款b项）。
+                                                <span class="text-danger">*</span>
+                                            </label>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="col-12 mb-3">
+                                        <div class="form-check">
+                                            <input type="checkbox" class="form-check-input" id="gdprMarketing" name="gdprMarketing">
+                                            <label class="form-check-label small" for="gdprMarketing">
+                                                <strong>可选同意：</strong>我同意接收酒店优惠信息和营销邮件。
+                                                我可以随时通过邮件中的退订链接或联系客服撤回此同意。
+                                            </label>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="col-12 mb-3">
+                                        <div class="form-check">
+                                            <input type="checkbox" class="form-check-input" id="gdprAnalytics" name="gdprAnalytics">
+                                            <label class="form-check-label small" for="gdprAnalytics">
+                                                <strong>可选同意：</strong>我同意为改善服务质量而进行的数据分析处理。
+                                                此数据将被匿名化处理且不会影响我的服务体验。
+                                            </label>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="alert alert-light border-warning small">
+                                    <i class="fas fa-info-circle text-warning me-2"></i>
+                                    <strong>重要说明：</strong>您可以随时撤回非必需的同意，这不会影响撤回前基于同意进行的处理的合法性。
+                                    详细的隐私政策请查看：<a href="/privacy-policy" target="_blank">完整隐私政策</a>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="mb-3 form-check">
+                            <input type="checkbox" class="form-check-input" id="agreeTerms" required>
+                            <label class="form-check-label" for="agreeTerms">
+                                我已阅读并同意 <a href="/terms" target="_blank" class="text-decoration-none">服务条款</a> 和 
+                                <a href="/privacy-policy" target="_blank" class="text-decoration-none">隐私政策</a>
+                                <span class="text-danger">*</span>
+                            </label>
+                        </div>
+                        
+                        <div class="d-grid mb-3">
+                            <button type="submit" class="btn btn-primary btn-lg" id="registerBtn">
+                                <i class="fas fa-user-plus me-2"></i>创建账户
+                            </button>
+                        </div>
+                    </form>
+                    
+                    <!-- 链接 -->
+                    <div class="text-center">
+                        <p class="mb-0">
+                            已有账户？
+                            <a th:href="@{/auth/login}" class="text-decoration-none fw-bold">
+                                立即登录
+                            </a>
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- jQuery -->
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+    
+    <script>
+        // 通用JavaScript函数
+        function showLoading(button) {
+            const spinner = '<span class="spinner-border spinner-border-sm me-2" role="status"></span>';
+            button.innerHTML = spinner + '处理中...';
+            button.disabled = true;
+        }
+        
+        // 填充测试数据函数
+        function fillTestData() {
+            const fillBtn = $('#fillTestDataBtn');
+            const originalText = '<i class="fas fa-magic me-2"></i>填充测试数据';
+            
+            // 显示加载状态
+            fillBtn.html('<span class="spinner-border spinner-border-sm me-2" role="status"></span>获取中...');
+            fillBtn.prop('disabled', true);
+            
+            // 设置超时保护，确保按钮状态能恢复
+            const timeoutId = setTimeout(function() {
+                fillBtn.html(originalText);
+                fillBtn.prop('disabled', false);
+                console.warn('按钮状态恢复超时保护触发');
+            }, 10000); // 10秒超时
+            
+            // 调用后端API获取随机测试用户
+            $.get('/auth/get-random-test-user')
+                .done(function(testUser) {
+                    // 清除超时
+                    clearTimeout(timeoutId);
+                    
+                    // 调试信息
+                    console.log('获取到的测试用户数据:', testUser);
+                    
+                    // 填充表单字段
+                    $('#username').val(testUser.username || '');
+                    $('#email').val(testUser.email || '');
+                    $('#password').val(testUser.password || '');
+                    $('#confirmPassword').val(testUser.confirmPassword || '');
+                    $('#firstName').val(testUser.firstName || '');
+                    $('#lastName').val(testUser.lastName || '');
+                    $('#phoneNumber').val(testUser.phoneNumber || '');
+                    $('#dateOfBirth').val(testUser.dateOfBirth || '');
+                    $('#nationality').val(testUser.nationality || '');
+                    $('#address').val(testUser.address || '');
+                    
+                    // 调试确认密码字段
+                    console.log('确认密码字段值:', testUser.confirmPassword);
+                    console.log('确认密码字段元素:', $('#confirmPassword'));
+                    console.log('确认密码字段当前值:', $('#confirmPassword').val());
+                    
+                    // 自动勾选GDPR同意选项
+                    $('#gdprProcessing').prop('checked', true);
+                    $('#gdprMarketing').prop('checked', true);
+                    $('#gdprAnalytics').prop('checked', true);
+                    $('#agreeTerms').prop('checked', true);
+                    
+                    // 显示成功消息
+                    showSuccessMessage('测试数据已成功填充！');
+                    
+                    // 触发字段验证
+                    $('#username').trigger('blur');
+                    $('#email').trigger('blur');
+                    $('#confirmPassword').trigger('input');
+                    
+                    console.log('成功填充测试用户数据:', testUser.username);
+                })
+                .fail(function(xhr, status, error) {
+                    // 清除超时
+                    clearTimeout(timeoutId);
+                    
+                    console.error('获取测试用户数据失败:', error);
+                    let errorMsg = '获取测试数据失败';
+                    
+                    if (xhr.responseJSON && xhr.responseJSON.message) {
+                        errorMsg = xhr.responseJSON.message;
+                    } else if (xhr.status === 404) {
+                        errorMsg = '没有可用的测试用户数据';
+                    } else if (xhr.status === 500) {
+                        errorMsg = '服务器内部错误，请稍后重试';
+                    }
+                    
+                    showErrorMessage(errorMsg);
+                    console.error('获取测试用户数据失败:', errorMsg);
+                })
+                .always(function() {
+                    // 清除超时
+                    clearTimeout(timeoutId);
+                    
+                    // 恢复按钮状态
+                    fillBtn.html(originalText);
+                    fillBtn.prop('disabled', false);
+                });
+        }
+        
+        // 显示成功消息
+        function showSuccessMessage(message) {
+            const successAlert = $(`
+                <div class="alert alert-success alert-dismissible fade show" role="alert">
+                    <i class="fas fa-check-circle me-2"></i>
+                    <span>${message}</span>
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+            `);
+            
+            $('.card-body').prepend(successAlert);
+            successAlert.delay(5000).fadeOut();
+        }
+        
+        // 显示错误消息
+        function showErrorMessage(message) {
+            const errorAlert = $(`
+                <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                    <i class="fas fa-exclamation-circle me-2"></i>
+                    <span>${message}</span>
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+            `);
+            
+            $('.card-body').prepend(errorAlert);
+            errorAlert.delay(5000).fadeOut();
+        }
+        
+        function hideLoading(button, originalText) {
+            button.innerHTML = originalText;
+            button.disabled = false;
+        }
+        
+        $(document).ready(function() {
+            // 自动隐藏提示消息
+            $('.alert').delay(5000).fadeOut();
+            
+            // 填充测试数据按钮点击事件
+            $('#fillTestDataBtn').click(function() {
+                fillTestData();
+            });
+            
+            // 添加按钮状态检查，防止按钮卡在加载状态
+            setInterval(function() {
+                const fillBtn = $('#fillTestDataBtn');
+                if (fillBtn.is(':disabled') && fillBtn.html().includes('获取中...')) {
+                    // 如果按钮被禁用且显示"获取中..."超过15秒，强制恢复
+                    const currentTime = Date.now();
+                    if (!fillBtn.data('clickTime')) {
+                        fillBtn.data('clickTime', currentTime);
+                    } else if (currentTime - fillBtn.data('clickTime') > 15000) {
+                        fillBtn.html('<i class="fas fa-magic me-2"></i>填充测试数据');
+                        fillBtn.prop('disabled', false);
+                        fillBtn.removeData('clickTime');
+                        console.warn('强制恢复按钮状态');
+                    }
+                }
+            }, 1000);
+            
+            // 密码显示/隐藏切换
+            $('#togglePassword').click(function() {
+                togglePasswordVisibility('#password', this);
+            });
+            
+            $('#toggleConfirmPassword').click(function() {
+                togglePasswordVisibility('#confirmPassword', this);
+            });
+            
+            function togglePasswordVisibility(fieldSelector, button) {
+                const passwordField = $(fieldSelector);
+                const icon = $(button).find('i');
+                
+                if (passwordField.attr('type') === 'password') {
+                    passwordField.attr('type', 'text');
+                    icon.removeClass('fa-eye').addClass('fa-eye-slash');
+                } else {
+                    passwordField.attr('type', 'password');
+                    icon.removeClass('fa-eye-slash').addClass('fa-eye');
+                }
+            }
+            
+            // 检查用户名可用性
+            $('#username').on('blur', function() {
+                const username = $(this).val();
+                if (username.length >= 3) {
+                    $.get('/auth/check-username', {username: username})
+                        .done(function(available) {
+                            const feedback = $('#usernameAvailability');
+                            if (available) {
+                                feedback.text('✓ 用户名可用').removeClass('text-danger').addClass('text-success');
+                            } else {
+                                feedback.text('✗ 用户名已存在').removeClass('text-success').addClass('text-danger');
+                            }
+                        })
+                        .fail(function() {
+                            console.log('无法检查用户名可用性');
+                        });
+                }
+            });
+            
+            // 检查邮箱可用性
+            $('#email').on('blur', function() {
+                const email = $(this).val();
+                if (email.includes('@')) {
+                    $.get('/auth/check-email', {email: email})
+                        .done(function(available) {
+                            const feedback = $('#emailAvailability');
+                            if (available) {
+                                feedback.text('✓ 邮箱可用').removeClass('text-danger').addClass('text-success');
+                            } else {
+                                feedback.text('✗ 邮箱已被注册').removeClass('text-success').addClass('text-danger');
+                            }
+                        })
+                        .fail(function() {
+                            console.log('无法检查邮箱可用性');
+                        });
+                }
+            });
+            
+            // 密码匹配验证
+            $('#confirmPassword').on('input', function() {
+                const password = $('#password').val();
+                const confirmPassword = $(this).val();
+                const feedback = $('#passwordMatch');
+                
+                if (confirmPassword.length > 0) {
+                    if (password === confirmPassword) {
+                        feedback.text('✓ 密码匹配').removeClass('text-danger').addClass('text-success');
+                    } else {
+                        feedback.text('✗ 密码不匹配').removeClass('text-success').addClass('text-danger');
+                    }
+                } else {
+                    feedback.text('');
+                }
+            });
+            
+            // 表单提交处理
+            $('#registerForm').submit(function(e) {
+                const password = $('#password').val();
+                const confirmPassword = $('#confirmPassword').val();
+                
+                if (password !== confirmPassword) {
+                    e.preventDefault();
+                    alert('密码和确认密码不匹配！');
+                    return false;
+                }
+                
+                // 验证GDPR必需同意
+                if (!$('#gdprProcessing').is(':checked')) {
+                    e.preventDefault();
+                    alert('您必须同意数据处理条款才能注册！');
+                    $('#gdprProcessing').focus();
+                    return false;
+                }
+                
+                // 验证服务条款同意
+                if (!$('#agreeTerms').is(':checked')) {
+                    e.preventDefault();
+                    alert('您必须同意服务条款和隐私政策才能注册！');
+                    $('#agreeTerms').focus();
+                    return false;
+                }
+                
+                const registerBtn = $('#registerBtn');
+                const originalText = registerBtn.html();
+                showLoading(registerBtn[0]);
+                
+                // 防止多次提交
+                setTimeout(function() {
+                    if (registerBtn.is(':disabled')) {
+                        hideLoading(registerBtn[0], originalText);
+                    }
+                }, 5000);
+            });
+        });
+    </script>
+</body>
+</html> 

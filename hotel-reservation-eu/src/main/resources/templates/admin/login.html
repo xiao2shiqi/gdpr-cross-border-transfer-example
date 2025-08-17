@@ -1,0 +1,352 @@
+<!DOCTYPE html>
+<html lang="zh-CN" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>运营管理系统 - 登录</title>
+    
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    
+    <style>
+        :root {
+            --admin-primary: #2c3e50;
+            --admin-secondary: #34495e;
+            --admin-accent: #e74c3c;
+            --admin-success: #27ae60;
+            --admin-warning: #f39c12;
+            --admin-light: #ecf0f1;
+        }
+
+        body {
+            background: linear-gradient(135deg, var(--admin-primary) 0%, var(--admin-secondary) 100%);
+            min-height: 100vh;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        .admin-login-container {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .admin-login-card {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            overflow: hidden;
+            max-width: 450px;
+            width: 100%;
+        }
+
+        .admin-login-header {
+            background: linear-gradient(135deg, var(--admin-primary) 0%, var(--admin-accent) 100%);
+            color: white;
+            padding: 40px 30px;
+            text-align: center;
+        }
+
+        .admin-login-header h1 {
+            font-size: 1.8rem;
+            font-weight: 600;
+            margin: 0;
+        }
+
+        .admin-login-header p {
+            margin: 10px 0 0;
+            opacity: 0.9;
+            font-size: 0.95rem;
+        }
+
+        .admin-login-body {
+            padding: 40px 30px;
+        }
+
+        .form-floating > label {
+            color: var(--admin-secondary);
+        }
+
+        .form-control {
+            border: 2px solid #e9ecef;
+            border-radius: 12px;
+            padding: 12px 16px;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+        }
+
+        .form-control:focus {
+            border-color: var(--admin-primary);
+            box-shadow: 0 0 0 0.2rem rgba(44, 62, 80, 0.25);
+        }
+
+        .btn-admin-primary {
+            background: linear-gradient(135deg, var(--admin-primary) 0%, var(--admin-secondary) 100%);
+            border: none;
+            border-radius: 12px;
+            padding: 12px 24px;
+            font-weight: 600;
+            font-size: 1rem;
+            color: white;
+            transition: all 0.3s ease;
+            width: 100%;
+        }
+
+        .btn-admin-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 30px rgba(44, 62, 80, 0.3);
+            color: white;
+        }
+
+        .alert-admin {
+            border: none;
+            border-radius: 12px;
+            padding: 15px 20px;
+            margin-bottom: 20px;
+        }
+
+        .alert-danger {
+            background-color: #fadbd8;
+            color: var(--admin-accent);
+            border-left: 4px solid var(--admin-accent);
+        }
+
+        .alert-success {
+            background-color: #d5f4e6;
+            color: var(--admin-success);
+            border-left: 4px solid var(--admin-success);
+        }
+
+        .admin-footer {
+            text-align: center;
+            padding: 20px;
+            color: #6c757d;
+            font-size: 0.9rem;
+            border-top: 1px solid #e9ecef;
+            background-color: #f8f9fa;
+        }
+
+        .admin-icon {
+            font-size: 3rem;
+            margin-bottom: 20px;
+            color: rgba(255,255,255,0.9);
+        }
+
+        /* 响应式设计 */
+        @media (max-width: 576px) {
+            .admin-login-header {
+                padding: 30px 20px;
+            }
+            
+            .admin-login-body {
+                padding: 30px 20px;
+            }
+            
+            .admin-login-header h1 {
+                font-size: 1.5rem;
+            }
+        }
+
+        /* 动画效果 */
+        .fade-in {
+            animation: fadeIn 0.8s ease-in;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .loading-btn {
+            position: relative;
+        }
+
+        .loading-btn:disabled {
+            opacity: 0.7;
+        }
+
+        .spinner-border-sm {
+            width: 1rem;
+            height: 1rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="admin-login-container">
+        <div class="admin-login-card fade-in">
+            <!-- 登录页面头部 -->
+            <div class="admin-login-header">
+                <i class="fas fa-cogs admin-icon"></i>
+                <h1>运营管理系统</h1>
+                <p>欧洲酒店预订系统 - 后台管理</p>
+            </div>
+
+            <!-- 登录表单 -->
+            <div class="admin-login-body">
+                <!-- 错误提示 -->
+                <div th:if="${param.error}" class="alert alert-danger alert-admin">
+                    <i class="fas fa-exclamation-triangle me-2"></i>
+                    用户名或密码错误，请重新输入
+                </div>
+
+                <!-- 登出成功提示 -->
+                <div th:if="${param.logout}" class="alert alert-success alert-admin">
+                    <i class="fas fa-check-circle me-2"></i>
+                    您已成功退出系统
+                </div>
+
+                <!-- 账户锁定提示 -->
+                <div th:if="${param.locked}" class="alert alert-danger alert-admin">
+                    <i class="fas fa-lock me-2"></i>
+                    账户已被锁定，请联系系统管理员
+                </div>
+
+                <form th:action="@{/admin/login}" method="post" id="adminLoginForm">
+                    <!-- 用户名输入 -->
+                    <div class="form-floating mb-3">
+                        <input type="text" class="form-control" id="username" name="username" 
+                               placeholder="请输入用户名" required autocomplete="username">
+                        <label for="username">
+                            <i class="fas fa-user me-2"></i>用户名
+                        </label>
+                    </div>
+
+                    <!-- 密码输入 -->
+                    <div class="form-floating mb-4">
+                        <input type="password" class="form-control" id="password" name="password" 
+                               placeholder="请输入密码" required autocomplete="current-password">
+                        <label for="password">
+                            <i class="fas fa-lock me-2"></i>密码
+                        </label>
+                    </div>
+
+                    <!-- 登录按钮 -->
+                    <button type="submit" class="btn btn-admin-primary loading-btn" id="loginBtn">
+                        <span class="btn-text">
+                            <i class="fas fa-sign-in-alt me-2"></i>登录系统
+                        </span>
+                        <span class="btn-loading d-none">
+                            <span class="spinner-border spinner-border-sm me-2" role="status"></span>
+                            登录中...
+                        </span>
+                    </button>
+
+                    <!-- CSRF Token -->
+                    <input type="hidden" th:if="${_csrf}" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+                </form>
+
+                <!-- 帮助信息 -->
+                <div class="mt-4 text-center">
+                    <small class="text-muted">
+                        <i class="fas fa-info-circle me-1"></i>
+                        如有登录问题，请联系系统管理员
+                    </small>
+                </div>
+            </div>
+
+            <!-- 页脚 -->
+            <div class="admin-footer">
+                <p class="mb-0">
+                    <i class="fas fa-shield-alt me-1"></i>
+                    系统受安全保护 &copy; 2024 欧洲酒店预订系统
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <script>
+        // 表单提交处理
+        document.getElementById('adminLoginForm').addEventListener('submit', function(e) {
+            const loginBtn = document.getElementById('loginBtn');
+            const btnText = loginBtn.querySelector('.btn-text');
+            const btnLoading = loginBtn.querySelector('.btn-loading');
+            
+            // 显示加载状态
+            btnText.classList.add('d-none');
+            btnLoading.classList.remove('d-none');
+            loginBtn.disabled = true;
+            
+            // 验证表单
+            const username = document.getElementById('username').value.trim();
+            const password = document.getElementById('password').value;
+            
+            if (!username || !password) {
+                e.preventDefault();
+                showError('用户名和密码不能为空');
+                resetButton();
+                return;
+            }
+            
+            if (username.length < 3) {
+                e.preventDefault();
+                showError('用户名长度不能少于3位');
+                resetButton();
+                return;
+            }
+        });
+
+        // 重置按钮状态
+        function resetButton() {
+            const loginBtn = document.getElementById('loginBtn');
+            const btnText = loginBtn.querySelector('.btn-text');
+            const btnLoading = loginBtn.querySelector('.btn-loading');
+            
+            btnText.classList.remove('d-none');
+            btnLoading.classList.add('d-none');
+            loginBtn.disabled = false;
+        }
+
+        // 显示错误信息
+        function showError(message) {
+            // 移除现有的错误提示
+            const existingAlert = document.querySelector('.alert-danger');
+            if (existingAlert) {
+                existingAlert.remove();
+            }
+            
+            // 创建新的错误提示
+            const alertHtml = `
+                <div class="alert alert-danger alert-admin">
+                    <i class="fas fa-exclamation-triangle me-2"></i>
+                    ${message}
+                </div>
+            `;
+            
+            // 插入到表单前面
+            const form = document.getElementById('adminLoginForm');
+            form.insertAdjacentHTML('beforebegin', alertHtml);
+        }
+
+        // 页面加载完成后聚焦到用户名输入框
+        document.addEventListener('DOMContentLoaded', function() {
+            document.getElementById('username').focus();
+            
+            // 检查是否有URL中的错误参数
+            const urlParams = new URLSearchParams(window.location.search);
+            if (urlParams.has('error')) {
+                document.getElementById('username').focus();
+            }
+        });
+
+        // 键盘快捷键
+        document.addEventListener('keydown', function(e) {
+            // Ctrl+Enter 快速登录
+            if (e.ctrlKey && e.key === 'Enter') {
+                document.getElementById('adminLoginForm').submit();
+            }
+        });
+    </script>
+</body>
+</html> 

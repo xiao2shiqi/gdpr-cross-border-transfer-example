@@ -1,0 +1,714 @@
+<!DOCTYPE html>
+<html lang="zh-CN" xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>运营管理系统 - 房源管理</title>
+    
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    
+    <style>
+        :root {
+            --admin-primary: #2c3e50;
+            --admin-secondary: #34495e;
+            --admin-accent: #e74c3c;
+            --admin-success: #27ae60;
+            --admin-warning: #f39c12;
+            --admin-info: #3498db;
+            --admin-light: #ecf0f1;
+            --admin-dark: #2c3e50;
+        }
+
+        body {
+            background-color: #f8f9fa;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        /* 顶部导航栏 */
+        .admin-navbar {
+            background: linear-gradient(135deg, var(--admin-primary) 0%, var(--admin-secondary) 100%);
+            border-bottom: 3px solid var(--admin-accent);
+            padding: 0;
+            box-shadow: 0 2px 20px rgba(0,0,0,0.1);
+        }
+
+        .admin-navbar .navbar-brand {
+            color: white !important;
+            font-weight: 600;
+            font-size: 1.3rem;
+            padding: 15px 0;
+        }
+
+        .admin-navbar .navbar-nav .nav-link {
+            color: rgba(255,255,255,0.9) !important;
+            padding: 15px 20px !important;
+            transition: all 0.3s ease;
+            border-left: 3px solid transparent;
+        }
+
+        .admin-navbar .navbar-nav .nav-link:hover {
+            color: white !important;
+            background-color: rgba(255,255,255,0.1);
+            border-left-color: var(--admin-accent);
+        }
+
+        .admin-navbar .navbar-nav .nav-link.active {
+            color: white !important;
+            background-color: rgba(255,255,255,0.15);
+            border-left-color: var(--admin-accent);
+        }
+
+        /* 用户信息下拉 */
+        .admin-user-info {
+            color: white !important;
+            padding: 10px 20px !important;
+        }
+
+        .admin-user-info:hover {
+            background-color: rgba(255,255,255,0.1);
+            color: white !important;
+        }
+
+        /* 主要内容区域 */
+        .admin-main-content {
+            padding: 30px 0;
+            min-height: calc(100vh - 120px);
+        }
+
+        .content-header {
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.08);
+            padding: 30px;
+            margin-bottom: 30px;
+        }
+
+        .content-title {
+            color: var(--admin-primary);
+            font-weight: 600;
+            margin: 0;
+        }
+
+        .content-description {
+            color: #6c757d;
+            margin: 10px 0 0;
+        }
+
+        /* 内容卡片 */
+        .content-card {
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.08);
+            padding: 30px;
+        }
+
+        /* 表格样式 */
+        .table-container {
+            background: white;
+            border-radius: 10px;
+            overflow: hidden;
+            margin-bottom: 20px;
+        }
+
+        .table {
+            margin: 0;
+        }
+
+        .table thead th {
+            background-color: var(--admin-light);
+            border: none;
+            color: var(--admin-dark);
+            font-weight: 600;
+            padding: 15px;
+        }
+
+        .table tbody td {
+            padding: 15px;
+            border-top: 1px solid #f1f3f4;
+            vertical-align: middle;
+        }
+
+        .table tbody tr:hover {
+            background-color: #f8f9fa;
+        }
+
+        /* 分页导航 */
+        .pagination {
+            justify-content: center;
+        }
+
+        .page-link {
+            color: var(--admin-primary);
+            border: 1px solid #dee2e6;
+            padding: 10px 15px;
+        }
+
+        .page-link:hover {
+            background-color: var(--admin-primary);
+            color: white;
+            border-color: var(--admin-primary);
+        }
+
+        .page-item.active .page-link {
+            background-color: var(--admin-primary);
+            border-color: var(--admin-primary);
+        }
+
+        /* 权限提示 */
+        .permission-badge {
+            font-size: 0.75rem;
+            padding: 4px 8px;
+            border-radius: 6px;
+        }
+
+        /* 动画效果 */
+        .fade-in {
+            animation: fadeIn 0.6s ease-in;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- 顶部导航栏 -->
+    <nav class="navbar navbar-expand-lg admin-navbar">
+        <div class="container-fluid px-4">
+            <!-- 品牌logo -->
+            <a class="navbar-brand" href="/admin/dashboard">
+                <i class="fas fa-cogs me-2"></i>运营管理系统
+            </a>
+
+            <!-- 导航菜单 -->
+            <div class="navbar-nav me-auto">
+                <a class="nav-link" href="/admin/dashboard">
+                    <i class="fas fa-chart-pie me-1"></i>仪表板
+                </a>
+                <a class="nav-link" href="/admin/hotel-branches">
+                    <i class="fas fa-building me-1"></i>分店管理
+                </a>
+                <a class="nav-link" href="/admin/room-types">
+                    <i class="fas fa-door-open me-1"></i>房型管理
+                </a>
+                <a class="nav-link active" href="/admin/room-type-branch-mappings">
+                    <i class="fas fa-home me-1"></i>房源管理
+                </a>
+                <a class="nav-link" href="/admin/orders">
+                    <i class="fas fa-clipboard-list me-1"></i>订单管理
+                </a>
+            </div>
+
+            <!-- 用户信息 -->
+            <div class="navbar-nav">
+                <div class="nav-item dropdown">
+                    <a class="nav-link dropdown-toggle admin-user-info" href="#" role="button" 
+                       data-bs-toggle="dropdown" aria-expanded="false">
+                        <i class="fas fa-user-circle me-2"></i>
+                        <span th:text="${userDisplayName}">用户名</span>
+                        <span class="permission-badge bg-secondary ms-2" th:text="${userRole?.displayName}">角色</span>
+                    </a>
+                    <ul class="dropdown-menu">
+                        <li><h6 class="dropdown-header">
+                            <i class="fas fa-building me-1"></i>
+                            <span th:text="${userDepartment}">部门</span>
+                        </h6></li>
+                        <li><hr class="dropdown-divider"></li>
+                        <li><a class="dropdown-item" href="/admin/profile">
+                            <i class="fas fa-user-edit me-2"></i>个人设置
+                        </a></li>
+                        <li><hr class="dropdown-divider"></li>
+                        <li><a class="dropdown-item" href="/admin/logout">
+                            <i class="fas fa-sign-out-alt me-2"></i>退出登录
+                        </a></li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- 主要内容区域 -->
+    <div class="container-fluid admin-main-content">
+        <!-- 页面标题 -->
+        <div class="content-header fade-in">
+            <h2 class="content-title">
+                <i class="fas fa-home me-3"></i>房源管理
+            </h2>
+            <p class="content-description">管理各分店的房源信息、价格和库存</p>
+        </div>
+
+        <!-- 关系管理内容 -->
+        <div class="content-card fade-in">
+            <!-- 操作工具栏 -->
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <div>
+                    <button class="btn btn-primary" onclick="showCreateModal()">
+                        <i class="fas fa-plus me-2"></i>新增房源
+                    </button>
+                    <button class="btn btn-outline-secondary" onclick="refreshMappings()">
+                        <i class="fas fa-refresh me-2"></i>刷新
+                    </button>
+                </div>
+                <div class="d-flex align-items-center">
+                    <span class="text-muted me-2">数据量：</span>
+                    <span id="dataCount" class="fw-bold">0</span>
+                </div>
+            </div>
+
+            <!-- 关联表格 -->
+            <div class="table-container">
+                <table class="table table-hover" id="mappingsTable">
+                    <thead>
+                        <tr>
+                            <th>分店</th>
+                            <th>房型</th>
+                            <th>有效价格</th>
+                            <th>可用/总数</th>
+                            <th>状态</th>
+                            <th>排序</th>
+                            <th>操作</th>
+                        </tr>
+                    </thead>
+                    <tbody id="mappingsTableBody">
+                        <!-- 数据加载中 -->
+                        <tr>
+                            <td colspan="7" class="text-center">
+                                <div class="d-flex justify-content-center align-items-center" style="height: 200px;">
+                                    <div class="spinner-border text-primary me-2" role="status"></div>
+                                    <span>正在加载数据...</span>
+                                </div>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+            
+            <!-- 分页导航 -->
+            <nav aria-label="房源管理分页">
+                <ul class="pagination" id="mappingsPagination">
+                    <!-- 动态生成分页 -->
+                </ul>
+            </nav>
+        </div>
+    </div>
+
+    <!-- 关联编辑模态框 -->
+    <div class="modal fade" id="mappingModal" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="mappingModalTitle">新增房源</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="mappingForm">
+                        <input type="hidden" id="mappingId">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="hotelBranchId" class="form-label">分店 *</label>
+                                    <select class="form-control" id="hotelBranchId" required>
+                                        <option value="">请选择分店</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="roomTypeId" class="form-label">房型 *</label>
+                                    <select class="form-control" id="roomTypeId" required>
+                                        <option value="">请选择房型</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-4">
+                                <div class="mb-3">
+                                    <label for="branchSpecificPrice" class="form-label">分店特定价格(€)</label>
+                                    <input type="number" step="0.01" class="form-control" id="branchSpecificPrice" placeholder="留空使用房型基础价格">
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="mb-3">
+                                    <label for="maxRoomsCount" class="form-label">最大房间数 *</label>
+                                    <input type="number" class="form-control" id="maxRoomsCount" required min="1">
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="mb-3">
+                                    <label for="availableRoomsCount" class="form-label">可用房间数 *</label>
+                                    <input type="number" class="form-control" id="availableRoomsCount" required min="0">
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="sortOrder" class="form-label">显示排序</label>
+                                    <input type="number" class="form-control" id="sortOrder" value="0">
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="isActive" class="form-label">状态</label>
+                                    <select class="form-control" id="isActive">
+                                        <option value="true">启用</option>
+                                        <option value="false">禁用</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <label for="notes" class="form-label">备注</label>
+                            <textarea class="form-control" id="notes" rows="2"></textarea>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+                    <button type="button" class="btn btn-primary" onclick="saveMapping()">保存</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // 全局变量
+        let currentMappingPage = 1;
+        let mappingsData = [];
+        let branches = [];
+        let roomTypes = [];
+
+        // 页面加载完成后初始化
+        document.addEventListener('DOMContentLoaded', function() {
+            loadInitialData();
+        });
+
+        // 加载初始数据
+        function loadInitialData() {
+            Promise.all([
+                loadBranches(),
+                loadRoomTypes(),
+                loadMappings(1)
+            ]);
+        }
+
+        // 加载分店列表
+        function loadBranches() {
+            return fetch('/admin/api/hotel-branches?page=1&size=100')
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        branches = data.data;
+                        populateBranchSelects();
+                    }
+                });
+        }
+
+        // 加载房型列表
+        function loadRoomTypes() {
+            return fetch('/admin/api/room-types?page=1&size=100')
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        roomTypes = data.data;
+                        populateRoomTypeSelects();
+                    }
+                });
+        }
+
+        // 填充分店下拉框
+        function populateBranchSelects() {
+            const select = document.getElementById('hotelBranchId');
+            const firstOption = select.querySelector('option');
+            select.innerHTML = '';
+            select.appendChild(firstOption);
+            
+            branches.forEach(branch => {
+                const option = document.createElement('option');
+                option.value = branch.id;
+                option.textContent = `${branch.branchName} (${branch.city})`;
+                select.appendChild(option);
+            });
+        }
+
+        // 填充房型下拉框
+        function populateRoomTypeSelects() {
+            const select = document.getElementById('roomTypeId');
+            const firstOption = select.querySelector('option');
+            select.innerHTML = '';
+            select.appendChild(firstOption);
+            
+            roomTypes.forEach(roomType => {
+                const option = document.createElement('option');
+                option.value = roomType.id;
+                option.textContent = roomType.typeName;
+                select.appendChild(option);
+            });
+        }
+
+        // 加载关联列表
+        function loadMappings(page = 1) {
+            currentMappingPage = page;
+
+            return fetch(`/admin/api/room-type-branch-mappings?page=${page}&size=5`)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        mappingsData = data.data;
+                        renderMappingsTable(data.data);
+                        renderMappingsPagination(data);
+                        document.getElementById('dataCount').textContent = data.total;
+                    } else {
+                        showError('加载关联列表失败: ' + data.message);
+                    }
+                })
+                .catch(error => {
+                    console.error('加载关联列表失败:', error);
+                    showError('加载关联列表失败');
+                });
+        }
+
+        // 渲染关联表格
+        function renderMappingsTable(mappings) {
+            const tbody = document.getElementById('mappingsTableBody');
+            tbody.innerHTML = '';
+            
+            if (mappings.length === 0) {
+                const row = document.createElement('tr');
+                row.innerHTML = '<td colspan="7" class="text-center text-muted">暂无数据</td>';
+                tbody.appendChild(row);
+                return;
+            }
+            
+            mappings.forEach(mapping => {
+                const row = document.createElement('tr');
+                const effectivePrice = mapping.branchSpecificPrice || mapping.roomTypeBasePrice || 0;
+                
+                row.innerHTML = `
+                    <td>
+                        <div class="fw-bold">${mapping.hotelBranchName || '未知分店'}</div>
+                        <small class="text-muted">${mapping.hotelBranchCity || ''}, ${mapping.hotelBranchCountry || ''}</small>
+                    </td>
+                    <td>
+                        <div class="fw-bold">${mapping.roomTypeName || '未知房型'}</div>
+                        <small class="text-muted">${mapping.bedType || ''} - ${mapping.size || 0}㎡</small>
+                    </td>
+                    <td>
+                        <span class="fw-bold text-success">€${effectivePrice}</span>
+                        ${mapping.branchSpecificPrice ? '<br><small class="text-muted">特定价格</small>' : '<br><small class="text-muted">基础价格</small>'}
+                    </td>
+                    <td>
+                        <span class="fw-bold">${mapping.availableRoomsCount}/${mapping.maxRoomsCount}</span>
+                    </td>
+                    <td>
+                        <span class="badge bg-${mapping.isActive ? 'success' : 'secondary'}">
+                            ${mapping.isActive ? '启用' : '禁用'}
+                        </span>
+                    </td>
+                    <td>${mapping.sortOrder || 0}</td>
+                    <td>
+                        <button class="btn btn-sm btn-outline-primary" onclick="editMapping(${mapping.id})">
+                            <i class="fas fa-edit"></i>
+                        </button>
+                        <button class="btn btn-sm btn-outline-danger" onclick="deleteMapping(${mapping.id})">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </td>
+                `;
+                tbody.appendChild(row);
+            });
+        }
+
+        // 渲染分页
+        function renderMappingsPagination(data) {
+            const pagination = document.getElementById('mappingsPagination');
+            pagination.innerHTML = '';
+            
+            if (data.pages <= 1) return;
+            
+            // 上一页
+            const prevItem = document.createElement('li');
+            prevItem.className = `page-item ${data.current <= 1 ? 'disabled' : ''}`;
+            prevItem.innerHTML = `<a class="page-link" href="#" onclick="loadMappings(${data.current - 1})">上一页</a>`;
+            pagination.appendChild(prevItem);
+            
+            // 页码
+            for (let i = 1; i <= data.pages; i++) {
+                const pageItem = document.createElement('li');
+                pageItem.className = `page-item ${i === data.current ? 'active' : ''}`;
+                pageItem.innerHTML = `<a class="page-link" href="#" onclick="loadMappings(${i})">${i}</a>`;
+                pagination.appendChild(pageItem);
+            }
+            
+            // 下一页
+            const nextItem = document.createElement('li');
+            nextItem.className = `page-item ${data.current >= data.pages ? 'disabled' : ''}`;
+            nextItem.innerHTML = `<a class="page-link" href="#" onclick="loadMappings(${data.current + 1})">下一页</a>`;
+            pagination.appendChild(nextItem);
+        }
+
+        // 显示创建模态框
+        function showCreateModal() {
+            document.getElementById('mappingModalTitle').textContent = '新增房源';
+            document.getElementById('mappingForm').reset();
+            document.getElementById('mappingId').value = '';
+            document.getElementById('isActive').value = 'true';
+            new bootstrap.Modal(document.getElementById('mappingModal')).show();
+        }
+
+        // 编辑关联
+        function editMapping(id) {
+            fetch(`/admin/api/room-type-branch-mappings/${id}`)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        const mapping = data.data;
+                        document.getElementById('mappingModalTitle').textContent = '编辑房源';
+                        document.getElementById('mappingId').value = mapping.id;
+                        document.getElementById('hotelBranchId').value = mapping.hotelBranchId;
+                        document.getElementById('roomTypeId').value = mapping.roomTypeId;
+                        document.getElementById('branchSpecificPrice').value = mapping.branchSpecificPrice || '';
+                        document.getElementById('maxRoomsCount').value = mapping.maxRoomsCount;
+                        document.getElementById('availableRoomsCount').value = mapping.availableRoomsCount;
+                        document.getElementById('sortOrder').value = mapping.sortOrder || 0;
+                        document.getElementById('isActive').value = mapping.isActive.toString();
+                        document.getElementById('notes').value = mapping.notes || '';
+                        
+                        new bootstrap.Modal(document.getElementById('mappingModal')).show();
+                    } else {
+                        showError('获取关联信息失败: ' + data.message);
+                    }
+                })
+                .catch(error => {
+                    console.error('获取关联信息失败:', error);
+                    showError('获取关联信息失败');
+                });
+        }
+
+        // 保存关联
+        function saveMapping() {
+            const form = document.getElementById('mappingForm');
+            if (!form.checkValidity()) {
+                form.reportValidity();
+                return;
+            }
+            
+            const id = document.getElementById('mappingId').value;
+            const isEdit = id && id !== '';
+            
+            const mappingData = {
+                roomTypeId: parseInt(document.getElementById('roomTypeId').value),
+                hotelBranchId: parseInt(document.getElementById('hotelBranchId').value),
+                branchSpecificPrice: document.getElementById('branchSpecificPrice').value ? 
+                                   parseFloat(document.getElementById('branchSpecificPrice').value) : null,
+                maxRoomsCount: parseInt(document.getElementById('maxRoomsCount').value),
+                availableRoomsCount: parseInt(document.getElementById('availableRoomsCount').value),
+                sortOrder: parseInt(document.getElementById('sortOrder').value) || 0,
+                isActive: document.getElementById('isActive').value === 'true',
+                notes: document.getElementById('notes').value
+            };
+            
+            const url = isEdit ? `/admin/api/room-type-branch-mappings/${id}` : '/admin/api/room-type-branch-mappings';
+            const method = isEdit ? 'PUT' : 'POST';
+            
+            fetch(url, {
+                method: method,
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(mappingData)
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    showSuccess(isEdit ? '房源更新成功' : '房源创建成功');
+                    bootstrap.Modal.getInstance(document.getElementById('mappingModal')).hide();
+                    loadMappings(currentMappingPage);
+                } else {
+                    showError('保存失败: ' + data.message);
+                }
+            })
+            .catch(error => {
+                console.error('保存关联失败:', error);
+                showError('保存关联失败');
+            });
+        }
+
+        // 删除关联
+        function deleteMapping(id) {
+            if (!confirm('确定要删除这个房源吗？此操作不可恢复。')) {
+                return;
+            }
+            
+            fetch(`/admin/api/room-type-branch-mappings/${id}`, {
+                method: 'DELETE'
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    showSuccess('房源删除成功');
+                    loadMappings(currentMappingPage);
+                } else {
+                    showError('删除失败: ' + data.message);
+                }
+            })
+            .catch(error => {
+                console.error('删除关联失败:', error);
+                showError('删除关联失败');
+            });
+        }
+
+        // 刷新列表
+        function refreshMappings() {
+            loadInitialData();
+        }
+
+        // 显示成功消息
+        function showSuccess(message) {
+            alert(message);
+        }
+
+        // 显示错误消息
+        function showError(message) {
+            alert(message);
+        }
+
+        // 验证可用房间数不超过最大房间数
+        document.getElementById('availableRoomsCount').addEventListener('input', function() {
+            const maxCount = parseInt(document.getElementById('maxRoomsCount').value) || 0;
+            const availableCount = parseInt(this.value) || 0;
+            
+            if (availableCount > maxCount) {
+                this.setCustomValidity('可用房间数不能超过最大房间数');
+            } else {
+                this.setCustomValidity('');
+            }
+        });
+
+        document.getElementById('maxRoomsCount').addEventListener('input', function() {
+            const availableInput = document.getElementById('availableRoomsCount');
+            const maxCount = parseInt(this.value) || 0;
+            const availableCount = parseInt(availableInput.value) || 0;
+            
+            if (availableCount > maxCount) {
+                availableInput.setCustomValidity('可用房间数不能超过最大房间数');
+            } else {
+                availableInput.setCustomValidity('');
+            }
+        });
+    </script>
+</body>
+</html>
