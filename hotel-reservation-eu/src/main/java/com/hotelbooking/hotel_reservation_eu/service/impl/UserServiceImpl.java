@@ -108,7 +108,7 @@ public class UserServiceImpl implements UserService {
         // 创建新用户 - 加密PII数据
         User user = User.builder()
                 .username(registerRequestDto.getUsername()) // 用户名不加密（用于登录）
-                .password(passwordEncoder.encode(registerRequestDto.getPassword()))
+                .password(passwordEncoder.encode(registerRequestDto.getPassword()))   // BCrypt 加密
                 .firstName(encryptionService.encrypt(registerRequestDto.getFirstName()))
                 .lastName(encryptionService.encrypt(registerRequestDto.getLastName()))
                 .email(encryptionService.encrypt(registerRequestDto.getEmail()))
